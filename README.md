@@ -145,6 +145,69 @@ same response whether or not the address exists.
 
 ---
 
+## Originality filter
+
+`src/server/services/similarity.ts`. Every score is computed server-side; the
+live score shown while a student types is advisory, and `POST /api/titles`
+re-runs the whole check before writing, so a client that ignores a block still
+cannot register a duplicate.
+
+**Pipeline.** Lowercase and strip punctuation → expand multi-word synonyms →
+expand abbreviations (`ML` → machine learning, `IoT` → internet of things,
+`Face ID` → face recognition) → drop stopwords and academic filler (`system`,
+`application`, `smart`, `automated`, `using`, `based`, …) → strip plurals.
+
+**Score.** TF-IDF cosine against the corpus is the primary signal at **0.65**,
+with the highest of four lexical signals — Dice token overlap, containment,
+character 3-gram Jaccard, Levenshtein ratio — contributing the remaining
+**0.35**. Cosine alone under-reads a near-duplicate whose shared words are
+common across the corpus; edit distance alone over-reads two unrelated titles
+of similar shape. When two titles reduce to the *same set of tokens* the score
+is forced to **1.00** regardless of the weighted sum — same words in any order
+is the same project.
+
+**Bands** (spec §3.4): **≥ 0.95 blocked**, **0.80–0.94 warning**, **< 0.80
+allowed**. The API returns the top five matches, each with its five individual
+signal values and the exact overlapping words, so the UI can explain *why*
+something was flagged rather than just showing a number.
+
+The project report's worked example is a unit test: *"Smart Attendance via Face
+Recognition"* and *"Smart Attendance Face Recognition"* both reduce to
+`attendance face recognition`, score 1.00, and are blocked.
+
+Two deliberate calibration choices are worth knowing. The stopword list is
+conservative — `design`, `model`, `study`, `platform` and `tool` are **not**
+stripped, because dropping them would collide genuinely different projects
+(*VLSI Design*, *Language Model*). And synonym phrases are matched on word
+boundaries, not as substrings: `"machine learning"` contains `"e learning"`,
+and a naive replace rewrote it to `"machinonline learning"`.
+
+---
+
+## Data imports
+
+CSV only, parsed and validated entirely on the server. Uploading is two steps —
+the same file is posted once to validate and again to apply, and it is
+re-parsed both times, so nothing the browser sends back is trusted.
+
+| Import | Required columns | Optional |
+|---|---|---|
+| Students | `usn`, `name` (or `full_name`), `cgpa`, `email` | `phone` |
+| Faculty | `name` (or `full_name`), `email`, `designation` | `domains` (`;`-separated), `capacity`, `phone`, `employee_id` |
+| Titles | one per line, **or** `title` | `group`, `domain`, `guide`, `cycle` |
+
+Title imports also accept the aliases the specification lists: `project title`,
+`final title`, `group code`, `faculty`, `mentor`.
+
+One error is reported per row — the first rule that fails — which keeps the
+rejection table readable when a spreadsheet is badly formatted. A student who
+already exists is **enrolled** into the cycle rather than rejected as a
+duplicate, since one person keeps one login across Major, Mini and Internship
+cycles. Accounts created by an import get the password in
+`DEFAULT_IMPORT_PASSWORD`; students are expected to reset it.
+
+---
+
 ## Licence
 
 Academic project work. Not licensed for redistribution.
