@@ -140,30 +140,47 @@ export async function POST(request: Request) {
     );
   }
 
-  const saved = await prisma.projectTitle.upsert({
-    where: { groupId: group.id },
-    create: {
-      cycleId: cycle.id,
-      groupId: group.id,
-      title,
-      normalizedTitle: normalizeTitle(title),
-      problemStatement: problemStatement ?? null,
-      domainId: domainId ?? group.domainId,
-      source: "STUDENT_SUBMISSION",
-      approvalStatus: "PENDING",
-      similarityScore: report.score,
-      similarityReport: JSON.parse(JSON.stringify(report)),
-    },
-    update: {
-      title,
-      normalizedTitle: normalizeTitle(title),
-      problemStatement: problemStatement ?? null,
-      domainId: domainId ?? group.domainId,
-      approvalStatus: "PENDING",
-      similarityScore: report.score,
-      similarityReport: JSON.parse(JSON.stringify(report)),
-    },
-    select: { id: true, title: true, approvalStatus: true },
+  const effectiveDomainId = domainId ?? group.domainId;
+  const normalized = normalizeTitle(title);
+  // The report is a plain object already, but Decimal-free JSON is what the
+  // Json column expects.
+  const similarityReport = JSON.parse(JSON.stringify(report));
+
+  const saved = await prisma.$transaction(async (tx) => {
+    // The domain lives on the group as well as the title, so the picker and
+    // the title form save together in one round trip.
+    if (domainId && domainId !== group.domainId) {
+      await tx.group.update({
+        where: { id: group.id },
+        data: { domainId },
+      });
+    }
+
+    return tx.projectTitle.upsert({
+      where: { groupId: group.id },
+      create: {
+        cycleId: cycle.id,
+        groupId: group.id,
+        title,
+        normalizedTitle: normalized,
+        problemStatement: problemStatement ?? null,
+        domainId: effectiveDomainId,
+        source: "STUDENT_SUBMISSION",
+        approvalStatus: "PENDING",
+        similarityScore: report.score,
+        similarityReport,
+      },
+      update: {
+        title,
+        normalizedTitle: normalized,
+        problemStatement: problemStatement ?? null,
+        domainId: effectiveDomainId,
+        approvalStatus: "PENDING",
+        similarityScore: report.score,
+        similarityReport,
+      },
+      select: { id: true, title: true, approvalStatus: true },
+    });
   });
 
   return NextResponse.json({ ok: true, title: saved, report });
