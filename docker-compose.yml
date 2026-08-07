@@ -1,0 +1,32 @@
+# Local development database.
+#
+#   docker compose up -d
+#
+# Production uses managed Postgres (Neon / Supabase / Vercel Postgres) — only
+# DATABASE_URL changes, because the app talks to both through the same
+# @prisma/adapter-pg driver adapter.
+#
+# Port 5433 is deliberate: it leaves 5432 free for any Postgres already
+# installed on the host.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: campus-here-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: campus
+      POSTGRES_PASSWORD: campus_dev
+      POSTGRES_DB: campus_here
+    ports:
+      - "5433:5432"
+    volumes:
+      - campus-here-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campus -d campus_here"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  campus-here-pgdata:
