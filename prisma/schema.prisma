@@ -1,7 +1,7 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Campus Here — Project Tracking & Allocation System (BMSIT, Dept. of CSE)
+//
+// Datasource URL is supplied by prisma.config.ts (CLI) and by the pg driver
+// adapter in src/lib/prisma.ts (runtime). Prisma 7 no longer reads it here.
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +10,838 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  STUDENT
+  FACULTY
+}
+
+enum Designation {
+  ASSISTANT_PROFESSOR
+  ASSOCIATE_PROFESSOR
+  PROFESSOR
+}
+
+enum GroupStatus {
+  FORMING
+  READY
+  SUBMITTED
+  ALLOCATED
+}
+
+enum GroupRole {
+  LEADER
+  MEMBER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum TitleSource {
+  IMPORTED_CORPUS
+  STUDENT_SUBMISSION
+}
+
+enum ApprovalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AllocationMethod {
+  GALE_SHAPLEY
+  MANUAL
+}
+
+enum AllocationStatus {
+  ALLOCATED
+  UNALLOCATED
+}
+
+/// Why a group came out of the matching pass without a guide. Surfaced in the
+/// admin manual-assignment queue.
+enum UnallocatedReason {
+  ALL_PREFERENCES_FULL
+  INVALID_PREFERENCES
+  NO_PREFERENCES
+  NOT_SUBMITTED
+}
+
+enum ReviewPhase {
+  R0
+  P1
+  P2
+}
+
+/// Phases the calendar-PDF detector can emit. Wider than ReviewPhase because a
+/// detected line may only be identifiable as "some review".
+enum CalendarPhase {
+  R0
+  P1
+  P2
+  REVIEW
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+enum OrientationType {
+  TEXT
+  AUDIO
+}
+
+/// Spec §3.6 requires both windows. The prototype only ever generated 7-day.
+enum ReminderKind {
+  REVIEW_15_DAY
+  REVIEW_7_DAY
+}
+
+enum ReminderStatus {
+  QUEUED
+  DUE
+  SENT
+  FAILED
+}
+
+/// DRY_RUN records a real, persisted send attempt that deliberately did not
+/// leave the machine. It is never reported to the user as delivered.
+enum DeliveryMode {
+  LIVE
+  DRY_RUN
+}
+
+enum MessageStatus {
+  PENDING
+  DELIVERED
+  FAILED
+  DRY_RUN
+}
+
+enum ImportEntity {
+  STUDENTS
+  FACULTY
+  TITLES
+}
+
+enum DetectionConfidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum FileKind {
+  STUDENT_CSV
+  FACULTY_CSV
+  TITLE_CSV
+  CALENDAR_PDF
+  ORIENTATION_AUDIO
+  EMAIL_ATTACHMENT
+}
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         Role
+  name         String
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+
+  resetTokenHash   String?
+  resetTokenExpiry DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student?
+  faculty Faculty?
+
+  orientationsPosted  Orientation[]
+  emailsSent          EmailMessage[]
+  whatsappSent        WhatsAppMessage[]
+  uploads             UploadedFile[]
+  calendarImports     CalendarImport[]
+  importBatches       ImportBatch[]
+  allocationRuns      AllocationRun[]
+  attendanceMarked    Attendance[]      @relation("AttendanceMarkedBy")
+  titlesReviewed      ProjectTitle[]    @relation("TitleReviewedBy")
+  allocationsAssigned Allocation[]      @relation("AllocationAssignedBy")
+
+  @@index([role])
+}
+
+/// A student is a person, not a per-cycle row: §5 asks for proper
+/// normalisation, and one human keeps one login even when they appear in the
+/// Major, Mini and Internship cycles. Cycle membership lives in StudentCycle.
+model Student {
+  id       String  @id @default(cuid())
+  userId   String  @unique
+  usn      String  @unique
+  fullName String
+  email    String  @unique
+  cgpa     Decimal @db.Decimal(4, 2)
+  phone    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  enrollments     StudentCycle[]
+  memberships     GroupMember[]
+  ledGroups       Group[]        @relation("GroupLeader")
+  sentInvites     GroupInvite[]  @relation("InviteFrom")
+  receivedInvites GroupInvite[]  @relation("InviteTo")
+  attendance      Attendance[]
+  notifications   Notification[]
+
+  @@index([cgpa])
+  @@index([fullName])
+}
+
+/// Roster membership: which students an admin uploaded for which cycle.
+model StudentCycle {
+  id        String   @id @default(cuid())
+  studentId String
+  cycleId   String
+  createdAt DateTime @default(now())
+
+  student Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  cycle   ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, cycleId])
+  @@index([cycleId])
+}
+
+/// Faculty are global across cycles; capacity is a per-cycle count of
+/// allocations measured against `capacity`, so no per-cycle join is needed.
+model Faculty {
+  id          String      @id @default(cuid())
+  userId      String      @unique
+  employeeId  String?     @unique
+  fullName    String
+  email       String      @unique
+  phone       String?
+  designation Designation
+  /// Max groups this guide may hold in a single cycle. Seeded from CapacityRule.
+  capacity    Int         @default(2)
+  isActive    Boolean     @default(true)
+
+  /// AES-256-GCM ciphertext for per-faculty Mail Center SMTP credentials.
+  /// Never selected into an API response.
+  smtpUserEnc String?
+  smtpPassEnc String?
+  smtpHost    String?
+  smtpPort    Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  domains        Domain[]
+  preferences    GuidePreference[]
+  allocations    Allocation[]
+  reviewSessions ReviewSession[]
+  evaluations    Evaluation[]
+
+  @@index([designation])
+}
+
+// ---------------------------------------------------------------------------
+// Master data
+// ---------------------------------------------------------------------------
+
+model ProjectCycle {
+  id        String    @id @default(cuid())
+  /// Stable slug matching the prototype: 2025-26-major | -mini | -intern
+  code      String    @unique
+  name      String
+  isActive  Boolean   @default(false)
+  /// Exact member count required before a group may submit (spec §3.3).
+  groupSize Int       @default(4)
+  /// Number of ranked guide preferences required (spec §3.5).
+  prefCount Int       @default(6)
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments      StudentCycle[]
+  groups           Group[]
+  invites          GroupInvite[]
+  titles           ProjectTitle[]
+  allocations      Allocation[]
+  allocationRuns   AllocationRun[]
+  reviewSessions   ReviewSession[]
+  orientations     Orientation[]
+  calendarImports  CalendarImport[]
+  calendarEvents   CalendarEvent[]
+  reminders        Reminder[]
+  emailMessages    EmailMessage[]
+  whatsappMessages WhatsAppMessage[]
+  notifications    Notification[]
+  importBatches    ImportBatch[]
+
+  @@index([isActive])
+}
+
+model Domain {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  /// Domains created implicitly while importing a title corpus start inactive
+  /// so they do not pollute the student-facing picker.
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  faculty Faculty[]
+  groups  Group[]
+  titles  ProjectTitle[]
+
+  @@index([isActive, sortOrder])
+}
+
+/// Admin-editable defaults behind Settings -> "Capacity defaults".
+model CapacityRule {
+  id          String      @id @default(cuid())
+  designation Designation @unique
+  maxGroups   Int         @default(2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Groups
+// ---------------------------------------------------------------------------
+
+model Group {
+  id       String      @id @default(cuid())
+  cycleId  String
+  code     String      @unique
+  status   GroupStatus @default(FORMING)
+  domainId String?
+  leaderId String
+  /// Recomputed from members on every membership change — never a stored
+  /// literal. The prototype printed this as hardcoded text.
+  avgCgpa  Decimal     @default(0) @db.Decimal(4, 2)
+
+  prefsSubmittedAt DateTime?
+  lockedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cycle  ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  domain Domain?      @relation(fields: [domainId], references: [id], onDelete: SetNull)
+  leader Student      @relation("GroupLeader", fields: [leaderId], references: [id])
+
+  members     GroupMember[]
+  invites     GroupInvite[]
+  preferences GuidePreference[]
+  title       ProjectTitle?
+  allocation  Allocation?
+  sessions    ReviewSession[]
+  evaluations Evaluation[]
+
+  @@index([cycleId, status])
+  @@index([cycleId, avgCgpa])
+}
+
+model GroupMember {
+  id        String    @id @default(cuid())
+  groupId   String
+  studentId String
+  /// Denormalised from the group so the DB itself can enforce one active group
+  /// per student per cycle (spec §3.3).
+  cycleId   String
+  role      GroupRole @default(MEMBER)
+  joinedAt  DateTime  @default(now())
+
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, studentId])
+  @@unique([cycleId, studentId])
+  @@index([studentId])
+}
+
+model GroupInvite {
+  id            String       @id @default(cuid())
+  groupId       String
+  cycleId       String
+  fromStudentId String
+  toStudentId   String
+  status        InviteStatus @default(PENDING)
+  message       String?
+  expiresAt     DateTime
+  respondedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group       Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  cycle       ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  fromStudent Student      @relation("InviteFrom", fields: [fromStudentId], references: [id], onDelete: Cascade)
+  toStudent   Student      @relation("InviteTo", fields: [toStudentId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, toStudentId])
+  @@index([toStudentId, status])
+  @@index([cycleId, status])
+}
+
+// ---------------------------------------------------------------------------
+// Titles & originality
+// ---------------------------------------------------------------------------
+
+model ProjectTitle {
+  id      String  @id @default(cuid())
+  cycleId String
+  /// Null for imported corpus entries, which belong to no current group.
+  groupId String? @unique
+
+  title            String
+  /// Output of the normalisation pipeline (stopwords stripped, synonyms
+  /// expanded). Stored so TF-IDF does not re-normalise the corpus per request.
+  normalizedTitle  String
+  problemStatement String?
+
+  domainId    String?
+  /// Raw domain text as it appeared in an imported CSV, preserved when it does
+  /// not map onto a master Domain.
+  domainLabel String?
+  /// Raw "guide"/"group"/"cycle" columns from an imported corpus row.
+  guideLabel  String?
+  groupLabel  String?
+  cycleLabel  String?
+
+  source         TitleSource
+  approvalStatus ApprovalStatus @default(DRAFT)
+
+  /// Combined originality score at submission time (0–1) plus the full
+  /// per-signal breakdown used to explain the verdict.
+  similarityScore  Decimal? @db.Decimal(5, 4)
+  similarityReport Json?
+
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cycle      ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  group      Group?       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  domain     Domain?      @relation(fields: [domainId], references: [id], onDelete: SetNull)
+  reviewedBy User?        @relation("TitleReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([cycleId, source])
+  @@index([cycleId, approvalStatus])
+}
+
+model GuidePreference {
+  id        String @id @default(cuid())
+  groupId   String
+  facultyId String
+  rank      Int
+
+  createdAt DateTime @default(now())
+
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, rank])
+  /// Makes "the same guide cannot be ranked twice" a database invariant rather
+  /// than a UI trick, which is all the prototype had.
+  @@unique([groupId, facultyId])
+  @@index([facultyId])
+}
+
+// ---------------------------------------------------------------------------
+// Allocation
+// ---------------------------------------------------------------------------
+
+model Allocation {
+  id                String             @id @default(cuid())
+  cycleId           String
+  groupId           String
+  facultyId         String?
+  /// Which of the group's 1–6 preferences was satisfied. Null when unallocated
+  /// or manually assigned outside the preference list.
+  matchedRank       Int?
+  method            AllocationMethod   @default(GALE_SHAPLEY)
+  status            AllocationStatus   @default(ALLOCATED)
+  unallocatedReason UnallocatedReason?
+  runId             String?
+  assignedById      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cycle      ProjectCycle   @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  group      Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  faculty    Faculty?       @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  run        AllocationRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+  assignedBy User?          @relation("AllocationAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  /// One allocation per group; a group belongs to exactly one cycle, so this
+  /// also gives the per-cycle uniqueness the spec asks for.
+  @@unique([groupId])
+  @@index([facultyId])
+  @@index([cycleId, status])
+  @@index([runId])
+}
+
+model AllocationRun {
+  id                String    @id @default(cuid())
+  cycleId           String
+  triggeredById     String
+  isDryRun          Boolean   @default(false)
+  startedAt         DateTime  @default(now())
+  finishedAt        DateTime?
+  groupsConsidered  Int       @default(0)
+  facultyConsidered Int       @default(0)
+  allocatedCount    Int       @default(0)
+  unallocatedCount  Int       @default(0)
+  /// Tie-break rule and capacity snapshot used, so a historical run stays
+  /// explainable after the settings change.
+  params            Json?
+
+  cycle       ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  triggeredBy User         @relation(fields: [triggeredById], references: [id])
+
+  allocations Allocation[]
+
+  @@index([cycleId, startedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Reviews, attendance, evaluation
+// ---------------------------------------------------------------------------
+
+model ReviewSession {
+  id              String        @id @default(cuid())
+  cycleId         String
+  groupId         String
+  facultyId       String?
+  phase           ReviewPhase
+  scheduledAt     DateTime
+  venue           String
+  durationMinutes Int           @default(20)
+  status          SessionStatus @default(SCHEDULED)
+  notes           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cycle   ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  group   Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  faculty Faculty?     @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+
+  attendance  Attendance[]
+  evaluations Evaluation[]
+
+  @@unique([groupId, phase])
+  @@index([cycleId, scheduledAt])
+  @@index([facultyId, scheduledAt])
+}
+
+model Attendance {
+  id         String           @id @default(cuid())
+  sessionId  String
+  studentId  String
+  status     AttendanceStatus
+  remarks    String?
+  markedById String
+  markedAt   DateTime         @default(now())
+
+  session  ReviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student  Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  markedBy User          @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+}
+
+model Evaluation {
+  id        String  @id @default(cuid())
+  sessionId String
+  groupId   String
+  facultyId String
+  /// Out of 10, matching the prototype's "7.5 / 10".
+  score     Decimal @db.Decimal(4, 2)
+  remarks   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session ReviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  group   Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  faculty Faculty       @relation(fields: [facultyId], references: [id])
+
+  @@unique([sessionId, groupId])
+  @@index([groupId])
+  @@index([facultyId])
+}
+
+// ---------------------------------------------------------------------------
+// Orientation, calendar, reminders
+// ---------------------------------------------------------------------------
+
+model Orientation {
+  id            String          @id @default(cuid())
+  cycleId       String
+  type          OrientationType
+  title         String
+  summary       String
+  /// Free-text attribution shown to students ("Coordinator", "Dr. …").
+  postedByLabel String
+  postedById    String
+  text          String?
+  audioFileId   String?         @unique
+  note          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cycle    ProjectCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  postedBy User          @relation(fields: [postedById], references: [id])
+  audio    UploadedFile? @relation("OrientationAudio", fields: [audioFileId], references: [id], onDelete: SetNull)
+
+  @@index([cycleId, createdAt])
+}
+
+model CalendarImport {
+  id             String  @id @default(cuid())
+  cycleId        String
+  fileId         String? @unique
+  filename       String
+  extractedChars Int     @default(0)
+  detectedEvents Int     @default(0)
+  /// Persisted so the "Extracted text preview" survives a reload. The
+  /// prototype kept it in a closure variable and lost it on every re-render.
+  rawText        String  @db.Text
+  uploadedById   String
+
+  createdAt DateTime @default(now())
+
+  cycle      ProjectCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  file       UploadedFile? @relation("CalendarPdf", fields: [fileId], references: [id], onDelete: SetNull)
+  uploadedBy User          @relation(fields: [uploadedById], references: [id])
+
+  events CalendarEvent[]
+
+  @@index([cycleId, createdAt])
+}
+
+model CalendarEvent {
+  id         String              @id @default(cuid())
+  cycleId    String
+  importId   String?
+  title      String
+  phase      CalendarPhase
+  eventDate  DateTime            @db.Date
+  confidence DetectionConfidence
+  /// The raw calendar line the date and phase were parsed out of.
+  sourceLine String
+
+  createdAt DateTime @default(now())
+
+  cycle  ProjectCycle    @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  import CalendarImport? @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  reminders Reminder[]
+
+  @@index([cycleId, eventDate])
+}
+
+model Reminder {
+  id        String         @id @default(cuid())
+  cycleId   String
+  eventId   String?
+  kind      ReminderKind
+  title     String
+  body      String         @db.Text
+  eventDate DateTime       @db.Date
+  /// 09:00 local on (eventDate - 15d) or (eventDate - 7d).
+  dueAt     DateTime
+  status    ReminderStatus @default(QUEUED)
+  attempts  Int            @default(0)
+  lastError String?
+  sentAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cycle ProjectCycle   @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  event CalendarEvent? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  emails EmailMessage[]
+
+  @@unique([eventId, kind])
+  @@index([cycleId, status, dueAt])
+}
+
+// ---------------------------------------------------------------------------
+// Communications
+// ---------------------------------------------------------------------------
+
+model EmailMessage {
+  id           String  @id @default(cuid())
+  cycleId      String
+  subject      String
+  body         String  @db.Text
+  senderName   String
+  senderRole   String
+  senderUserId String
+  reminderId   String?
+
+  recipientCount Int          @default(0)
+  delivered      Int          @default(0)
+  failed         Int          @default(0)
+  mode           DeliveryMode @default(DRY_RUN)
+  /// Which transport actually ran: "env-smtp", "faculty-smtp" or "dry-run".
+  smtpMode       String?
+  error          String?
+  /// [{ filename, mimeType, size }] — bytes live in UploadedFile.
+  attachments    Json?
+
+  createdAt DateTime @default(now())
+
+  cycle    ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  sender   User         @relation(fields: [senderUserId], references: [id])
+  reminder Reminder?    @relation(fields: [reminderId], references: [id], onDelete: SetNull)
+
+  notifications Notification[]
+
+  @@index([cycleId, createdAt])
+}
+
+/// One row per recipient: this is the student's in-app inbox and the per-person
+/// delivery record behind the aggregate counts on EmailMessage.
+model Notification {
+  id             String  @id @default(cuid())
+  emailMessageId String?
+  studentId      String?
+  cycleId        String
+  /// Kept denormalised so a recipient who is not a seeded student (a manually
+  /// typed extra address) still gets a delivery record.
+  toEmail        String
+  usn            String?
+
+  subject    String
+  body       String        @db.Text
+  senderName String
+  status     MessageStatus @default(PENDING)
+  error      String?
+  /// Ethereal/preview URL when the transport provides one.
+  previewUrl String?
+  readAt     DateTime?
+
+  createdAt DateTime @default(now())
+
+  emailMessage EmailMessage? @relation(fields: [emailMessageId], references: [id], onDelete: Cascade)
+  student      Student?      @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  cycle        ProjectCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+  @@index([toEmail, createdAt])
+  @@index([cycleId, createdAt])
+}
+
+model WhatsAppMessage {
+  id        String        @id @default(cuid())
+  cycleId   String
+  toNumber  String
+  body      String        @db.Text
+  twilioSid String?
+  status    MessageStatus @default(PENDING)
+  mode      DeliveryMode  @default(DRY_RUN)
+  error     String?
+  sentById  String
+
+  createdAt DateTime @default(now())
+
+  cycle  ProjectCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  sentBy User         @relation(fields: [sentById], references: [id])
+
+  @@index([cycleId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Uploads & import audit
+// ---------------------------------------------------------------------------
+
+/// Vercel has no writable filesystem outside /tmp, so uploaded bytes live in
+/// Postgres. Size is capped in the route handlers, not here.
+model UploadedFile {
+  id           String   @id @default(cuid())
+  filename     String
+  mimeType     String
+  size         Int
+  bytes        Bytes
+  kind         FileKind
+  uploadedById String
+
+  createdAt DateTime @default(now())
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  orientation    Orientation?    @relation("OrientationAudio")
+  calendarImport CalendarImport? @relation("CalendarPdf")
+  importBatch    ImportBatch?    @relation("ImportSource")
+
+  @@index([kind, createdAt])
+}
+
+model ImportBatch {
+  id          String       @id @default(cuid())
+  cycleId     String
+  entity      ImportEntity
+  source      String       @default("CSV")
+  totalRows   Int          @default(0)
+  successRows Int          @default(0)
+  failedRows  Int          @default(0)
+  /// [{ rowNumber, usn, email, message }] for the admin error table.
+  errors      Json?
+  fileId      String?      @unique
+  appliedById String
+
+  createdAt DateTime @default(now())
+
+  cycle     ProjectCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  file      UploadedFile? @relation("ImportSource", fields: [fileId], references: [id], onDelete: SetNull)
+  appliedBy User          @relation(fields: [appliedById], references: [id])
+
+  @@index([cycleId, entity, createdAt])
 }
