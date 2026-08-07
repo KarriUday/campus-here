@@ -83,16 +83,29 @@ function SignalBar({ label, value }: { label: string; value: number }) {
 
 export function DuplicateChecker({
   initialTitle = "",
+  value,
+  onChange,
   excludeTitleId,
   label = "Proposed title",
+  disabled = false,
   onReport,
 }: {
   initialTitle?: string;
+  /** Controlled mode: supply both `value` and `onChange` to own the input. */
+  value?: string;
+  onChange?: (next: string) => void;
   excludeTitleId?: string;
   label?: string;
+  disabled?: boolean;
   onReport?: (report: SimilarityReport | null) => void;
 }) {
-  const [title, setTitle] = useState(initialTitle);
+  const [internalTitle, setInternalTitle] = useState(initialTitle);
+  const controlled = value !== undefined;
+  const title = controlled ? value : internalTitle;
+  const setTitle = (next: string) => {
+    if (controlled) onChange?.(next);
+    else setInternalTitle(next);
+  };
   const [report, setReport] = useState<SimilarityReport | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,6 +179,7 @@ export function DuplicateChecker({
         label={label}
         placeholder="e.g. Adaptive Study Planner using Machine Learning"
         value={title}
+        disabled={disabled}
         onChange={(event) => setTitle(event.target.value)}
         hint="Scored live against every registered and imported title."
       />

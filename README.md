@@ -145,6 +145,32 @@ same response whether or not the address exists.
 
 ---
 
+## Group formation
+
+The rules the prototype only implied are enforced in `src/server/services/groups.ts`
+and, wherever possible, by the database as well:
+
+| Rule | Enforced by |
+|---|---|
+| One active group per student per cycle | `@@unique([cycleId, studentId])` on `GroupMember` |
+| No duplicate guide across the six ranks | `@@unique([groupId, facultyId])` on `GuidePreference` |
+| A group never exceeds its size | members + outstanding invites ≤ `groupSize`, checked in a serializable transaction |
+| Average CGPA | recomputed arithmetically on every membership change |
+| Accepting an invite declines the rest | one `updateMany` inside the accept transaction |
+
+Accepting and creating run at `Serializable` isolation with a retry on Prisma's
+`P2034`, because two students can act on the last seat in the same instant. The
+unique constraint is the real backstop; the isolation level is what turns a
+race into a clean error rather than a fifth member.
+
+A group must clear five checks before its leader can submit: exactly
+`groupSize` members, a chosen domain, a registered title, a non-empty problem
+statement, and `prefCount` ranked guides. Submitting sets `lockedAt`, after
+which membership, title, statement and preferences are all immutable — which
+is what makes an allocation run reproducible.
+
+---
+
 ## Originality filter
 
 `src/server/services/similarity.ts`. Every score is computed server-side; the
