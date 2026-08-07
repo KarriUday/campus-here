@@ -7,8 +7,10 @@ A role-based platform for academic project cycles: group formation, title
 originality checking, guide allocation, review scheduling and reporting for
 Admin, Student and Faculty users.
 
-> **Status:** under construction. Phases A (scaffold) and B (data model) are
-> complete. See `docs/` for the full plan as it lands.
+> **Status:** under construction. Scaffold, data model, authentication, seed
+> data and the application shell are complete; the feature modules land in
+> later phases and their routes currently say so explicitly rather than
+> showing sample data.
 
 ---
 
@@ -56,6 +58,26 @@ connection string and `DIRECT_URL` to the direct one — Prisma Migrate runs DDL
 which pooled endpoints reject. Nothing else changes; the same driver adapter
 serves both.
 
+### Demo accounts
+
+`npx prisma db seed` creates 3 cycles, 40 guides, 300 students and 71 groups.
+Every seeded account shares the password in `SEED_PASSWORD` (default
+`Campus@123`). Change it before any real deployment.
+
+| Role | Email |
+|---|---|
+| Admin | `admin@example.edu` |
+| Faculty | `ananya.rao@example.edu` (any guide in `prisma/seed-data/people.ts`) |
+| Student | `1BY23CS001`–`1BY23CS300`, addresses printed by the seed |
+
+Addresses are `@example.edu` because this repository is public. The Mail
+Center's live test recipient is read from the uncommitted `DEMO_STUDENT_EMAIL`
+instead of being baked into the seed.
+
+The seed is deterministic — it runs off a fixed PRNG seed, so the same cohort
+comes back every time. It **truncates every table** before inserting, and
+refuses to run when `NODE_ENV=production` unless `SEED_ALLOW_PRODUCTION=true`.
+
 ### Scripts
 
 | Command | What it does |
@@ -97,6 +119,29 @@ Three normalisation decisions worth calling out:
 Uploaded bytes (calendar PDFs, orientation audio, CSVs) are stored in Postgres
 rather than on disk, because Vercel provides no writable filesystem outside
 `/tmp`.
+
+---
+
+## Authentication
+
+Sessions are HS256 JWTs issued by `jose`, carried in an HTTP-only, `SameSite=Lax`
+cookie (`ch_session`) that expires after 8 hours. Passwords are bcrypt hashes at
+cost 12.
+
+Two layers guard every route, and the second is the one that matters:
+
+1. `src/proxy.ts` — Next.js 16 renamed the `middleware` convention to `proxy`.
+   It redirects anonymous users to `/login?next=…` and sends a signed-in user
+   who wanders into another role's section back to their own dashboard.
+2. `src/lib/rbac.ts` — `requireApi()` and `requirePage()` re-check the session
+   inside each handler and page. A route stays protected even if a proxy
+   matcher changes, and API calls get a real 401/403 rather than a redirect.
+
+Login answers identically for an unknown address, a wrong password and a
+disabled account, and spends comparable time on each, so it cannot be used to
+enumerate accounts. Password-reset tokens are stored only as SHA-256 hashes,
+expire in 30 minutes and are single use; the request endpoint always returns the
+same response whether or not the address exists.
 
 ---
 
