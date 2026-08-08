@@ -46,3 +46,6 @@ next-env.d.ts
 # agent/editor tooling (not project code)
 /.claude/
 /skills-lock.json
+
+# e2e screenshots
+/.e2e/

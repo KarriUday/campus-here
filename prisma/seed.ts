@@ -360,10 +360,18 @@ async function main() {
   console.log(`  ${allocationCount} allocations from 1 historical run`);
 
   // --- titles for allocated groups ----------------------------------------
+  if (allocatedGroups.length > CURRENT_TITLES.length) {
+    // Reusing a title with a suffix would seed genuine near-duplicates and
+    // make the originality screen look broken, so refuse instead of fudging.
+    throw new Error(
+      `Only ${CURRENT_TITLES.length} distinct titles for ${allocatedGroups.length} allocated groups. ` +
+        `Add more to prisma/seed-data/titles.ts.`,
+    );
+  }
+
   for (const [index, group] of allocatedGroups.entries()) {
-    const entry = CURRENT_TITLES[index % CURRENT_TITLES.length];
-    const suffix = index >= CURRENT_TITLES.length ? ` (Phase ${index}) ` : "";
-    const title = `${entry.title}${suffix}`.trim();
+    const entry = CURRENT_TITLES[index];
+    const title = entry.title;
     await prisma.projectTitle.create({
       data: {
         cycleId: major.id,
