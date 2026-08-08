@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Card, CardBody } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { TitleApprovals } from "@/components/faculty/title-approvals";
+import { ExportButton } from "@/components/reports/export-button";
 import { getSelectedCycle } from "@/lib/cycle";
 import { prisma } from "@/lib/prisma";
 import { requirePage } from "@/lib/rbac";
@@ -53,6 +54,7 @@ export default async function TitleApprovalPage() {
         subtitle="Approve a final title and register it, or send it back with a reason."
         cycleName={cycle.name}
         role="Faculty"
+        actions={<ExportButton type="titles">Export titles</ExportButton>}
       />
 
       <TitleApprovals

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Card, CardBody } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { AttendanceMarker } from "@/components/faculty/session-work";
+import { ExportButton } from "@/components/reports/export-button";
 import { getSelectedCycle } from "@/lib/cycle";
 import { prisma } from "@/lib/prisma";
 import { requirePage } from "@/lib/rbac";
@@ -60,6 +61,12 @@ export default async function MarkAttendancePage() {
         subtitle="Batch-wise attendance marking, per review session."
         cycleName={cycle.name}
         role="Faculty"
+        actions={
+          <>
+            <ExportButton type="attendance">Per session</ExportButton>
+            <ExportButton type="attendance-cumulative">Cumulative</ExportButton>
+          </>
+        }
       />
 
       <AttendanceMarker

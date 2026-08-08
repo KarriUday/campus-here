@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader, StatCard } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
+import { ExportButton } from "@/components/reports/export-button";
 import { getSelectedCycle } from "@/lib/cycle";
 import { prisma } from "@/lib/prisma";
 import { requirePage } from "@/lib/rbac";
@@ -78,6 +79,7 @@ export default async function AssignedGroupsPage() {
         subtitle="Groups mapped to you by the allocation engine."
         cycleName={cycle.name}
         role="Faculty"
+        actions={<ExportButton type="groups">Download roster</ExportButton>}
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

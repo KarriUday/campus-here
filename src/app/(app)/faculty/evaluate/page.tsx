@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { EvaluationForm } from "@/components/faculty/session-work";
+import { ExportButton } from "@/components/reports/export-button";
 import { getSelectedCycle } from "@/lib/cycle";
 import { prisma } from "@/lib/prisma";
 import { requirePage } from "@/lib/rbac";
@@ -58,6 +59,7 @@ export default async function EvaluatePage() {
         subtitle="Enter a score out of 10 with remarks. Saved per group per phase."
         cycleName={cycle.name}
         role="Faculty"
+        actions={<ExportButton type="evaluation">Export scores</ExportButton>}
       />
 
       <EvaluationForm

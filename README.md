@@ -25,7 +25,7 @@ Admin, Student and Faculty users.
 | ORM | Prisma 7 with the `@prisma/adapter-pg` driver adapter |
 | Auth | JWT (`jose`, HS256) in HTTP-only cookies, bcrypt hashing |
 | Email / WhatsApp | Nodemailer · Twilio |
-| Reports | SheetJS (`.xlsx`) |
+| Reports | ExcelJS (`.xlsx`) |
 | Tests | Vitest |
 | Hosting | Vercel (app + cron) |
 
@@ -168,6 +168,36 @@ A group must clear five checks before its leader can submit: exactly
 statement, and `prefCount` ranked guides. Submitting sets `lockedAt`, after
 which membership, title, statement and preferences are all immutable — which
 is what makes an allocation run reproducible.
+
+---
+
+## Reports
+
+One `ReportService` (`src/server/services/reports.ts`) serves both roles, as §10
+asks — the same nine builders with a `scope` parameter rather than duplicated
+export logic per screen.
+
+| Scope | Sees |
+|---|---|
+| `admin` | the whole cycle, all nine reports |
+| `faculty` | only groups that guide holds, for the five group-level reports |
+
+**Scope is derived from the session, never from the query string.** A faculty
+caller requesting `scope=admin` is forced back to `faculty`, and the four
+cycle-wide reports (students, allocation, reminders, faculty-load) return 403.
+
+Each workbook is real `.xlsx` with a bold, filled, frozen header row, an
+autofilter, sized columns, and an **About** sheet recording the report, cycle,
+scope, row count and who generated it.
+
+**ExcelJS rather than SheetJS.** The specification names SheetJS, but its
+community build silently drops cell styles on write — styling is a paid
+feature — so it cannot produce the formatted header §10 requires. This was
+verified directly: a bold header set through SheetJS CE does not survive a
+write/read round-trip. ExcelJS was already the plan's documented fallback.
+Its only advisory is a transitive `uuid` issue affecting `v3/v5/v6` when a
+buffer argument is passed; ExcelJS calls only `v4()` with no buffer, so the
+vulnerable path is unreachable.
 
 ---
 
