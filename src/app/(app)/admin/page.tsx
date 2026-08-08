@@ -132,10 +132,8 @@ export default async function AdminDashboardPage() {
           />
           <CardBody className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
             {FLOW.map((item, i) => (
-              <div key={item.step} className="border-ink border-t pt-3">
-                <p className="index-num text-primary">
-                  [{String(i + 1).padStart(2, "0")}]
-                </p>
+              <div key={item.step} className="bg-surface rounded-2xl p-6">
+                <p className="numeral text-ink-tertiary text-2xl">{i + 1}</p>
                 <p className="display text-ink mt-3 text-lg">{item.title}</p>
                 <p className="text-ink-secondary mt-2 text-xs leading-relaxed">
                   {item.detail}

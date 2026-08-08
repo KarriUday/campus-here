@@ -55,7 +55,7 @@ export function DataTable<T>({
             {showIndex && (
               <th
                 scope="col"
-                className="label-xs text-ink-tertiary w-12 py-3 pr-3 text-left font-medium"
+                className="label-xs text-ink-tertiary w-12 py-3 pr-3 text-left"
               >
                 №
               </th>
@@ -65,7 +65,7 @@ export function DataTable<T>({
                 key={col.key}
                 scope="col"
                 className={cn(
-                  "label-xs text-ink-tertiary px-3 py-3 text-left font-medium whitespace-nowrap",
+                  "label-xs text-ink-tertiary px-3 py-3 text-left whitespace-nowrap",
                   col.numeric && "text-right",
                   col.className,
                 )}
@@ -79,11 +79,11 @@ export function DataTable<T>({
           {rows.map((row, index) => (
             <tr
               key={rowKey(row, index)}
-              className="border-border-subtle hover:bg-surface border-b transition-colors"
+              className="border-border-subtle hover:bg-surface border-b transition-colors last:border-b-0"
             >
               {showIndex && (
                 <td className="index-num py-3 pr-3 align-middle">
-                  [{String(index + 1).padStart(2, "0")}]
+                  {index + 1}
                 </td>
               )}
               {columns.map((col) => (

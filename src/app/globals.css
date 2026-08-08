@@ -1,64 +1,76 @@
 @import "tailwindcss";
 
 /*
- * Campus Here — Constructivist editorial.
+ * Campus Here — warm, rounded, colour-blocked.
  *
- * Near-black on warm off-white, one hot accent, hairline rules instead of
- * cards, oversized uppercase display type, monospaced numerals. Square
- * corners and no drop shadows: structure comes from rules and whitespace.
+ * A cream ground, soft white cards, generous radii and a five-colour module
+ * palette. Headlines are large and sentence case; colour does the work that
+ * rules and uppercase used to.
  *
- * Token *names* are unchanged from the previous system on purpose — every
- * component already consumes them, so the whole app moves together.
+ * Token *names* are unchanged on purpose — every component already consumes
+ * them, so the whole app moves together.
  */
 @theme {
   /* Canvas & ink */
-  --color-bg: #f2f0ec;
-  --color-surface: #eae7e1;
-  --color-surface-raised: #f7f6f3;
-  --color-border: #0a0a0a;
-  --color-border-subtle: #cfcbc2;
-  --color-ink: #0a0a0a;
-  --color-ink-secondary: #56534c;
-  --color-ink-tertiary: #8a867d;
+  --color-bg: #f5f1e4;
+  --color-surface: #efeade;
+  --color-surface-raised: #ffffff;
+  --color-border: #2c2e2a;
+  --color-border-subtle: #e2ddd0;
+  --color-ink: #2c2e2a;
+  --color-ink-secondary: #5c5f57;
+  --color-ink-tertiary: #8b8d84;
 
-  /* The single hot accent. */
-  --color-brand-50: #fff1ec;
-  --color-brand-100: #ffded3;
-  --color-brand-200: #ffc0ac;
-  --color-brand-300: #ff9a7a;
-  --color-brand-400: #ff6b3d;
-  --color-brand-500: #ff3b00;
-  --color-brand-600: #e03400;
-  --color-brand-700: #b32900;
-  --color-primary: #ff3b00;
-  --color-primary-hover: #0a0a0a;
-  --color-primary-soft: #fff1ec;
+  /*
+   * The module palette. Each area of the app takes one as its field colour,
+   * so a screen is recognisable before a word of it is read.
+   */
+  --color-lime: #8ed462;
+  --color-sun: #f9d314;
+  --color-coral: #ff705d;
+  --color-sky: #2ba0ff;
+  --color-lilac: #ebc1ff;
 
-  /* Status — deliberately restrained so the accent stays the hottest thing. */
-  --color-success: #0b6b3a;
-  --color-success-soft: #e4ede7;
-  --color-success-ink: #0b6b3a;
-  --color-warning: #8a6a00;
-  --color-warning-soft: #f1ece0;
-  --color-warning-ink: #6b5200;
-  --color-error: #ff3b00;
-  --color-error-soft: #ffe9e2;
-  --color-error-ink: #b32900;
-  --color-info: #0a0a0a;
-  --color-info-soft: #e6e3dc;
-  --color-info-ink: #0a0a0a;
+  /* Sky doubles as the action colour, as on the reference. */
+  --color-brand-50: #e6f4ff;
+  --color-brand-100: #c7e6ff;
+  --color-brand-200: #96d1ff;
+  --color-brand-300: #5fb8ff;
+  --color-brand-400: #2ba0ff;
+  --color-brand-500: #2ba0ff;
+  --color-brand-600: #1b8ae6;
+  --color-brand-700: #0b62a8;
+  --color-primary: #2ba0ff;
+  --color-primary-hover: #1b8ae6;
+  --color-primary-soft: #e6f4ff;
 
-  /* Square. Structure comes from rules, not rounding. */
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
+  /* Status. Fields stay light; the -ink variants carry AA text contrast. */
+  --color-success: #4ea832;
+  --color-success-soft: #e9f5e0;
+  --color-success-ink: #2f6b1c;
+  --color-warning: #f9d314;
+  --color-warning-soft: #fdf4cc;
+  --color-warning-ink: #7a5c00;
+  --color-error: #ff705d;
+  --color-error-soft: #ffe7e3;
+  --color-error-ink: #b23c2c;
+  --color-info: #2ba0ff;
+  --color-info-soft: #e6f4ff;
+  --color-info-ink: #0b62a8;
 
-  /* No drop shadows; a hairline does the work. */
-  --shadow-card: none;
-  --shadow-raised: none;
-  --shadow-glow: 0 0 0 2px var(--color-ink);
+  /* Rounded, at three scales plus the big section radius. */
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 32px;
+  --radius-field: 12px;
+  --radius-section: 44px;
 
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  /* Soft and low, never a hard drop. */
+  --shadow-card: 0 1px 2px rgba(44, 46, 42, 0.04), 0 10px 26px -14px rgba(44, 46, 42, 0.12);
+  --shadow-raised: 0 2px 6px rgba(44, 46, 42, 0.06), 0 22px 44px -20px rgba(44, 46, 42, 0.18);
+  --shadow-glow: 0 0 0 4px var(--color-primary-soft);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono-face), ui-monospace, monospace;
 }
 
@@ -76,90 +88,109 @@
     background-color: var(--color-bg);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    /* Slightly tightened, as a grotesque wants to be set. */
-    letter-spacing: -0.011em;
+    letter-spacing: -0.006em;
   }
 
-  /* A hard offset outline rather than a soft ring. */
+  /* A soft ring, matching the rounded language. */
   :focus-visible {
-    outline: 2px solid var(--color-ink);
+    outline: 3px solid var(--color-primary);
     outline-offset: 2px;
-    border-radius: 0;
   }
 
   ::selection {
-    background-color: var(--color-primary);
-    color: #fff;
+    background-color: var(--color-sun);
+    color: var(--color-ink);
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     letter-spacing: -0.03em;
   }
 }
 
 /* --- typographic utilities ------------------------------------------- */
 
-/** Oversized uppercase display, as on the reference. */
+/** Large sentence-case headline. Set tight, never uppercased. */
 @utility display {
   font-family: var(--font-sans);
-  font-weight: 700;
-  text-transform: uppercase;
+  font-weight: 600;
   letter-spacing: -0.035em;
-  line-height: 0.92;
+  line-height: 0.98;
 }
 
-/** The tiny all-caps label that annotates everything. */
+/** The small supporting label. Plain sentence case, no tracking-out. */
 @utility label-xs {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
 }
 
+/** Codes that must not be misread — USNs, group codes. */
 @utility mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/** Big figures: monospaced so columns of numbers align. */
+/** Big figures. Tabular so columns of numbers line up. */
 @utility numeral {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  font-weight: 600;
   letter-spacing: -0.04em;
-  line-height: 0.9;
+  line-height: 0.95;
 }
 
-/* --- the [01] index motif -------------------------------------------- */
-
+/** A quiet ordinal, used where a row or step needs a number. */
 @utility index-num {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--color-ink-tertiary);
+  font-variant-numeric: tabular-nums;
 }
-
-/* --- grain overlay ---------------------------------------------------- */
 
 /**
- * Fixed film grain over the whole page. Pointer-events off so it never
- * intercepts a click, and hidden from assistive tech.
+ * The hand-drawn underline the reference puts beneath one word of a
+ * headline. Drawn as a background so it wraps with the text and never
+ * affects layout.
  */
-.grain::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+@utility squiggle {
+  /*
+   * Drawn as a positioned pseudo-element rather than a background on the
+   * text. An inline box paints its background over the font's content area,
+   * not the line box, so `background-position: 100%` lands unpredictably
+   * once line-height is set below 1.
+   */
+  position: relative;
+  display: inline-block;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.02em;
+    height: 0.14em;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='12' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 7c10-6 20 4 30 0s20-6 30-2 20 6 30 2 18-4 26-1' fill='none' stroke='%23C9A0E8' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-size: 1.6em 100%;
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .grain::after {
-    display: none;
-  }
+/* --- section fields ---------------------------------------------------- */
+
+/**
+ * A full-bleed colour block with the reference's oversized corner radius.
+ * `section-field` sets the shape; a colour class supplies the ground.
+ */
+@utility section-field {
+  border-radius: var(--radius-section);
+  overflow: clip;
 }
 
 /* --- motion ----------------------------------------------------------- */
@@ -189,11 +220,12 @@
 @utility skeleton {
   background: linear-gradient(
     90deg,
-    rgba(10, 10, 10, 0.05),
-    rgba(10, 10, 10, 0.1),
-    rgba(10, 10, 10, 0.05)
+    rgba(44, 46, 42, 0.05),
+    rgba(44, 46, 42, 0.1),
+    rgba(44, 46, 42, 0.05)
   );
   background-size: 200% 100%;
+  border-radius: var(--radius-field);
   animation: shimmer 1.4s ease-in-out infinite;
 }
 

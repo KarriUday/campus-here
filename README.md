@@ -48,41 +48,48 @@ gating, and Vercel Cron able to invoke a route directly — which an in-process
 
 ## Design system
 
-Constructivist editorial: near-black ink on a warm off-white, one hot accent,
-and structure carried by hairline rules and whitespace rather than cards and
-shadows.
+Warm, rounded and colour-blocked: a cream ground, soft white cards floating on
+it, generous corner radii, and a five-colour module palette. Headlines are
+large and sentence case; colour does the work that rules and uppercase would.
 
 | Token | Value | Used for |
 |---|---|---|
-| `--color-bg` | `#F2F0EC` | Page ground |
-| `--color-ink` | `#0A0A0A` | Body text, borders, rules |
-| `--color-primary` | `#FF3B00` | The single accent — actions, index numerals, alerts |
-| `--radius-*` | `0px` | Everything is square |
-| `--shadow-*` | `none` | A rule does the work a shadow would |
+| `--color-bg` | `#F5F1E4` | Cream page ground |
+| `--color-surface-raised` | `#FFFFFF` | Cards, the floating navbar, inputs |
+| `--color-ink` | `#2C2E2A` | Text and the active nav pill |
+| `--color-primary` | `#2BA0FF` | Actions |
+| `--color-lime` / `sun` / `coral` / `lilac` | `#8ED462` `#F9D314` `#FF705D` `#EBC1FF` | Module and statistic fields |
+| `--radius-lg` / `xl` / `2xl` | `14` / `20` / `32px` | Controls, panels, cards |
+| `--radius-section` | `44px` | Full-bleed colour sections |
 
-Type is **Archivo** for display and body, **JetBrains Mono** for labels,
-numerals and codes. Four utilities carry the voice: `display` (oversized
-uppercase, `line-height: 0.92`), `label-xs` (mono, tracked-out caps),
-`numeral` (tabular figures for statistics) and `index-num` (the bracketed
-`[01]` motif that numbers navigation, tables and steps).
+Type is **Inter** throughout, from a 13px table cell to a 110px headline.
+**JetBrains Mono** is reserved for codes that must not be misread — USNs and
+group codes — where a distinct 0/O and 1/l earns its place.
 
-Motion lives in `src/components/motion/`: masked line reveals, a marquee
-context strip, count-up statistics, page transitions and magnetic buttons,
-over a fixed SVG grain overlay. There is no scroll hijacking and no custom
-cursor. Every primitive honours `prefers-reduced-motion` — `Reveal` renders
-its content statically rather than animating it.
+Four utilities carry the voice: `display` (large, sentence case), `label-xs`,
+`numeral` (tabular figures) and `squiggle`, the hand-drawn underline the
+reference sets beneath one word of a headline.
 
-Two constraints are load-bearing rather than stylistic:
+Motion lives in `src/components/motion/`: masked line reveals, count-up
+statistics and page transitions. No scroll hijacking and no custom cursor.
+Every primitive honours `prefers-reduced-motion` — `Reveal` renders its
+content statically rather than animating it.
+
+Three constraints are load-bearing rather than stylistic:
 
 - **`Reveal` defaults to scroll-triggered but page titles pass `mode="mount"`.**
   A masked reveal hides its content until the animation runs, so anything
   above the fold must animate on mount; an IntersectionObserver that never
   fires would otherwise leave the heading permanently invisible. The browser
-  self-test asserts each `h1` is *painted* — overlapping its clipping
-  ancestor — not merely present in the DOM.
-- **The mask is padded by `0.14em` and pulled back with a negative margin.**
-  The display face is set below its own ink height, so a bare
-  `overflow: hidden` shaves the caps and descenders.
+  self-test asserts each `h1` is *painted* — at least 98% of it overlapping
+  its clipping ancestor — not merely present in the DOM.
+- **The mask lives inside the `h1`, not around it.** Its padding is in `em`,
+  so outside the heading it resolves against the ambient 16px and clips the
+  glyphs at every breakpoint.
+- **`squiggle` is a positioned pseudo-element, not a background image.** An
+  inline box paints its background over the font's content area rather than
+  the line box, so `background-position: 100%` lands unpredictably once
+  line-height drops below 1.
 
 ---
 

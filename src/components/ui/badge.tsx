@@ -5,15 +5,15 @@ import { cn } from "@/lib/utils";
 export type BadgeTone = "neutral" | "info" | "success" | "warning" | "error";
 
 /**
- * Square, uppercase, hairline. Only error and warning take the hot accent, so
- * a page full of neutral badges stays quiet and a real problem shouts.
+ * Filled pills. Soft tinted grounds so a table of them stays calm, with the
+ * darker -ink variants carrying the text contrast.
  */
 const TONES: Record<BadgeTone, string> = {
-  neutral: "border-border-subtle text-ink-secondary",
-  info: "border-ink text-ink",
-  success: "border-success text-success",
-  warning: "border-primary text-primary",
-  error: "border-primary bg-primary text-white",
+  neutral: "bg-surface text-ink-secondary",
+  info: "bg-info-soft text-info-ink",
+  success: "bg-success-soft text-success-ink",
+  warning: "bg-warning-soft text-warning-ink",
+  error: "bg-error-soft text-error-ink",
 };
 
 export function Badge({
@@ -28,7 +28,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "label-xs inline-flex items-center border px-2 py-1 font-medium",
+        "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
         TONES[tone],
         className,
       )}

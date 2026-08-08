@@ -121,7 +121,7 @@ export default async function StudentsPage({
               </label>
               <div className="relative mt-2">
                 <Search
-                  className="text-ink-tertiary pointer-events-none absolute top-1/2 left-0 size-4 -translate-y-1/2"
+                  className="text-ink-tertiary pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
                   aria-hidden
                 />
                 <input
@@ -129,7 +129,7 @@ export default async function StudentsPage({
                   name="q"
                   defaultValue={query}
                   placeholder="USN, name or email"
-                  className="border-border-subtle text-ink placeholder:text-ink-tertiary hover:border-ink-tertiary focus:border-ink h-10 w-full border-b bg-transparent pr-3 pl-7 text-sm transition-colors"
+                  className="border-border-subtle bg-surface-raised text-ink placeholder:text-ink-tertiary hover:border-ink-tertiary focus:border-primary h-11 w-full rounded-lg border pr-3 pl-10 text-sm transition-colors"
                 />
               </div>
             </div>
@@ -141,7 +141,7 @@ export default async function StudentsPage({
                 id="student-grouped"
                 name="grouped"
                 defaultValue={grouped}
-                className="border-border-subtle text-ink hover:border-ink-tertiary focus:border-ink mt-2 h-10 border-b bg-transparent pr-6 text-sm transition-colors"
+                className="border-border-subtle bg-surface-raised text-ink hover:border-ink-tertiary focus:border-primary mt-2 h-11 rounded-lg border px-3 pr-8 text-sm transition-colors"
               >
                 <option value="">All students</option>
                 <option value="yes">In a group</option>
@@ -150,7 +150,7 @@ export default async function StudentsPage({
             </div>
             <button
               type="submit"
-              className="label-xs bg-primary hover:bg-ink h-10 px-5 text-white transition-colors"
+              className="bg-primary hover:bg-primary-hover h-11 rounded-full px-6 text-sm font-medium text-white transition-colors"
             >
               Apply
             </button>
@@ -216,7 +216,7 @@ export default async function StudentsPage({
                 {page > 1 && (
                   <Link
                     href={linkFor({ page: page - 1 })}
-                    className="label-xs border-ink hover:bg-ink hover:text-bg border px-4 py-2 transition-colors"
+                    className="bg-surface-raised border-border-subtle hover:border-ink rounded-full border px-5 py-2 text-sm transition-colors"
                   >
                     Previous
                   </Link>
@@ -224,7 +224,7 @@ export default async function StudentsPage({
                 {page < pageCount && (
                   <Link
                     href={linkFor({ page: page + 1 })}
-                    className="label-xs border-ink hover:bg-ink hover:text-bg border px-4 py-2 transition-colors"
+                    className="bg-surface-raised border-border-subtle hover:border-ink rounded-full border px-5 py-2 text-sm transition-colors"
                   >
                     Next
                   </Link>

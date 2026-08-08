@@ -12,7 +12,7 @@ export function NotBuiltYet({ phase, summary }: { phase: string; summary: string
   return (
     <Card>
       <CardBody className="flex flex-col items-start gap-3">
-        <span className="label-xs border-ink text-ink inline-flex items-center gap-2 border px-3 py-1.5">
+        <span className="bg-warning-soft text-warning-ink inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium">
           <Hammer className="size-3.5" aria-hidden />
           Not implemented yet · {phase}
         </span>

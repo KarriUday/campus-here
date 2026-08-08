@@ -155,7 +155,7 @@ export function UserMenu({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="label-xs border-ink text-ink hover:bg-ink hover:text-bg flex h-8 items-center gap-2 border px-3 transition-colors"
+        className="label-xs bg-surface text-ink hover:bg-ink hover:text-bg flex h-10 items-center gap-2 rounded-full px-4 transition-colors"
       >
         <User className="size-3.5" aria-hidden />
         <span className="hidden max-w-[9rem] truncate sm:inline">{name}</span>
@@ -164,12 +164,12 @@ export function UserMenu({
       {open && (
         <div
           role="menu"
-          className="border-ink bg-bg absolute right-0 z-50 mt-2 w-64 border p-2"
+          className="bg-surface-raised shadow-raised absolute right-0 z-50 mt-2 w-64 rounded-2xl p-2"
         >
           <div className="px-2.5 py-2">
-            <p className="text-ink truncate text-sm font-semibold uppercase">{name}</p>
+            <p className="text-ink truncate text-sm font-semibold">{name}</p>
             <p className="text-ink-tertiary mono mt-0.5 truncate text-xs">{email}</p>
-            <span className="label-xs text-primary mt-2 inline-block">[ {role} ]</span>
+            <span className="bg-primary-soft text-info-ink mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium">{role}</span>
           </div>
           <div className="bg-border-subtle my-2 h-px" />
           <button
@@ -183,7 +183,7 @@ export function UserMenu({
               router.refresh();
             }}
             className={cn(
-              "label-xs text-ink hover:bg-ink hover:text-bg flex w-full items-center gap-2 px-2.5 py-2.5 transition-colors",
+              "label-xs text-ink hover:bg-surface flex w-full items-center gap-2 rounded-full px-3 py-2.5 transition-colors",
               signingOut && "opacity-50",
             )}
           >

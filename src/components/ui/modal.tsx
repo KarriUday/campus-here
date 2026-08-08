@@ -56,11 +56,11 @@ export function Modal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="border-ink bg-bg relative w-full max-w-lg border"
+            className="bg-surface-raised shadow-raised relative w-full max-w-lg rounded-2xl"
           >
-            <div className="flex items-start justify-between gap-4 px-5 pt-5">
+            <div className="flex items-start justify-between gap-4 px-6 pt-6">
               <div>
-                <h2 className="display text-ink text-xl">{title}</h2>
+                <h2 className="display text-ink text-2xl">{title}</h2>
                 {description && (
                   <p className="text-ink-secondary mt-2 text-sm leading-relaxed">
                     {description}
@@ -71,14 +71,14 @@ export function Modal({
                 type="button"
                 onClick={onClose}
                 aria-label="Close dialog"
-                className="text-ink-tertiary hover:text-primary p-1 transition-colors"
+                className="text-ink-tertiary hover:bg-surface rounded-full p-2 transition-colors"
               >
                 <X className="size-4" aria-hidden />
               </button>
             </div>
-            {children && <div className="px-5 py-4">{children}</div>}
+            {children && <div className="px-6 py-4">{children}</div>}
             {footer && (
-              <div className="border-border-subtle flex justify-end gap-2 border-t px-5 py-4">
+              <div className="flex justify-end gap-2 px-6 pt-2 pb-6">
                 {footer}
               </div>
             )}

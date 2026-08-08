@@ -32,16 +32,17 @@ export function Reveal({
       ? { animate: { y: 0 } }
       : { whileInView: { y: 0 }, viewport: { once: true, margin: "-8% 0px" } };
 
-  // The display face is set at line-height 0.92, so its ink box is taller than
-  // its line box and a bare `overflow-hidden` shaves the caps and descenders.
-  // Pad the clip box, pull the padding back out of the layout, and start the
-  // content low enough that the taller box still hides it.
+  // The display face is set below its own ink height, and headings may carry
+  // the squiggle underline, which paints into its padding. A bare
+  // `overflow-hidden` shaves both. Pad the clip box, pull the padding back out
+  // of the layout, and start the content low enough that the taller box still
+  // hides it.
   return (
     <span
-      className={`-my-[0.14em] block overflow-hidden py-[0.14em] ${className ?? ""}`}
+      className={`-my-[0.3em] block overflow-hidden py-[0.3em] ${className ?? ""}`}
     >
       <motion.span
-        initial={{ y: "125%" }}
+        initial={{ y: "170%" }}
         {...animation}
         transition={{ duration: 0.75, delay, ease: [0.16, 1, 0.3, 1] }}
         className="block"

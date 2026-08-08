@@ -10,15 +10,15 @@ import type {
 import { cn } from "@/lib/utils";
 
 /**
- * Underline inputs rather than boxes: a hairline baseline that thickens to ink
- * on focus. Less furniture on screen, and it suits the ruled layout.
+ * Rounded white boxes on the cream ground — the control should read as a
+ * distinct surface you can type into, matching the card language.
  */
 const CONTROL_BASE =
-  "w-full bg-transparent border-0 border-b border-border-subtle px-0 text-sm text-ink " +
+  "w-full rounded-lg border border-border-subtle bg-surface-raised px-4 text-sm text-ink " +
   "placeholder:text-ink-tertiary transition-colors " +
-  "hover:border-ink-tertiary focus:border-ink focus:ring-0 " +
-  "disabled:cursor-not-allowed disabled:text-ink-tertiary disabled:border-dashed " +
-  "aria-[invalid=true]:border-primary";
+  "hover:border-ink-tertiary focus:border-primary " +
+  "disabled:cursor-not-allowed disabled:bg-surface disabled:text-ink-tertiary " +
+  "aria-[invalid=true]:border-error";
 
 type FieldShellProps = {
   label?: string;
@@ -53,11 +53,11 @@ export function Field({
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       {label && (
-        <label htmlFor={id} className="label-xs text-ink-tertiary">
+        <label htmlFor={id} className="label-xs text-ink">
           {label}
           {required && (
-            <span className="text-primary ml-1" aria-hidden>
-              ✳
+            <span className="text-coral ml-1" aria-hidden>
+              *
             </span>
           )}
         </label>
@@ -68,7 +68,7 @@ export function Field({
         "aria-invalid": error ? true : undefined,
       })}
       {error ? (
-        <p id={errorId} role="alert" className="text-primary text-xs">
+        <p id={errorId} role="alert" className="text-error-ink text-xs">
           {error}
         </p>
       ) : (
@@ -111,7 +111,7 @@ export function Input({
           {...controlProps}
           {...props}
           required={required}
-          className={cn(CONTROL_BASE, "h-10", className)}
+          className={cn(CONTROL_BASE, "h-11", className)}
         />
       )}
     </Field>
@@ -149,7 +149,7 @@ export function Textarea({
           required={required}
           className={cn(
             CONTROL_BASE,
-            "border-border-subtle min-h-28 border px-3 py-2 leading-relaxed focus:border-ink",
+            "min-h-32 py-3 leading-relaxed",
             className,
           )}
         />
@@ -188,7 +188,7 @@ export function Select({
           {...controlProps}
           {...props}
           required={required}
-          className={cn(CONTROL_BASE, "h-10 pr-6", className)}
+          className={cn(CONTROL_BASE, "h-11 pr-8", className)}
         >
           {children}
         </select>

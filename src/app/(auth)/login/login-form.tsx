@@ -48,11 +48,13 @@ export function LoginForm() {
 
   return (
     <div>
-      <p className="label-xs text-ink-tertiary mb-5">[01] &nbsp; Access</p>
+      <p className="bg-lime text-ink mb-5 inline-block rounded-full px-3 py-1 text-xs font-medium">
+        Access
+      </p>
 
-      <Reveal mode="mount">
-        <h1 className="display text-5xl sm:text-6xl">Sign in</h1>
-      </Reveal>
+      <h1 className="display text-5xl sm:text-6xl">
+        <Reveal mode="mount">Sign in</Reveal>
+      </h1>
 
       <p className="text-ink-secondary border-border-subtle mt-5 border-b pb-6 text-sm leading-relaxed">
         Use the account issued by your department. Roles are resolved on the

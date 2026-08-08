@@ -145,16 +145,31 @@ async function headingIsPainted(page: Page) {
     const text = (h1.textContent ?? "").trim();
     if (!text) return { painted: false, why: "empty h1" };
 
-    const box = h1.getBoundingClientRect();
+    // Descend to the element that actually carries the text — the reveal mask
+    // may wrap the h1 or live inside it, and only the inner one moves.
+    let inner: Element = h1;
+    while (
+      inner.children.length === 1 &&
+      (inner.children[0].textContent ?? "").trim() === text
+    ) {
+      inner = inner.children[0];
+    }
+
+    const box = inner.getBoundingClientRect();
     if (box.height === 0 || box.width === 0) return { painted: false, why: "zero box" };
 
-    for (let node = h1.parentElement; node; node = node.parentElement) {
+    for (let node = inner.parentElement; node; node = node.parentElement) {
       const style = getComputedStyle(node);
       if (!/hidden|clip/.test(style.overflowY + style.overflow)) continue;
       const clip = node.getBoundingClientRect();
       const overlap = Math.min(box.bottom, clip.bottom) - Math.max(box.top, clip.top);
-      if (overlap < box.height * 0.5) {
-        return { painted: false, why: `clipped: ${Math.round(overlap)}/${Math.round(box.height)}px visible` };
+      // Demand near-total visibility: a heading missing its descenders is a
+      // defect, and a 50% threshold waves that through.
+      if (overlap < box.height * 0.98) {
+        return {
+          painted: false,
+          why: `clipped: ${Math.round(box.height - overlap)}px of ${Math.round(box.height)}px cut`,
+        };
       }
       break;
     }

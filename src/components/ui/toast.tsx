@@ -32,19 +32,19 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-/** A typographic marker rather than an icon, matching the footnote motif. */
+/** A compact typographic marker; the tone colour carries the meaning. */
 const MARK: Record<ToastTone, string> = {
-  success: "[ ✓ ]",
-  error: "[ ✳ ]",
-  warning: "[ ! ]",
-  info: "[ i ]",
+  success: "✓",
+  error: "!",
+  warning: "!",
+  info: "i",
 };
 
 const TONE_CLASSES: Record<ToastTone, string> = {
-  success: "text-success",
-  error: "text-primary",
-  warning: "text-primary",
-  info: "text-ink",
+  success: "text-success-ink",
+  error: "text-error-ink",
+  warning: "text-warning-ink",
+  info: "text-info-ink",
 };
 
 const AUTO_DISMISS_MS = 5000;

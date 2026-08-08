@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Emptiness stated plainly in type rather than dressed up with an
- * illustration — the asterisk is the reference's footnote motif.
- */
+/** A soft tinted panel rather than a bare rule, so an empty screen still
+ *  looks composed. */
 export function EmptyState({
   title,
   description,
@@ -21,14 +19,16 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "border-border-subtle flex flex-col items-start border-t py-12",
+        "bg-surface flex flex-col items-start rounded-2xl px-8 py-12",
         className,
       )}
     >
-      <span className="text-primary label-xs mb-3" aria-hidden>
-        {icon ?? "[ ✳ ]"}
-      </span>
-      <p className="display text-ink text-xl">{title}</p>
+      {icon && (
+        <span className="text-ink-tertiary mb-3" aria-hidden>
+          {icon}
+        </span>
+      )}
+      <p className="display text-ink text-2xl">{title}</p>
       {description && (
         <p className="text-ink-secondary mt-3 max-w-md text-sm leading-relaxed">
           {description}

@@ -111,16 +111,16 @@ export function PreferencesForm({
           <div
             key={index}
             className={cn(
-              "flex items-center gap-3 border px-4 py-3 transition-colors",
-              selected ? "border-primary/40 bg-primary-soft/40" : "border-border",
+              "flex items-center gap-3 rounded-xl px-4 py-3 transition-colors",
+              selected ? "bg-primary-soft" : "bg-surface",
             )}
           >
             <span
               className={cn(
-                "mono flex size-7 shrink-0 items-center justify-center border text-xs font-semibold",
+                "flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                 selected
-                  ? "bg-primary border-primary text-white"
-                  : "border-border-subtle text-ink-tertiary",
+                  ? "bg-primary text-white"
+                  : "bg-surface-raised text-ink-tertiary",
               )}
               aria-hidden
             >
@@ -138,7 +138,7 @@ export function PreferencesForm({
                 next[index] = event.target.value || null;
                 setSlots(next);
               }}
-              className="border-border bg-surface-raised text-ink h-10 w-full border px-3 text-sm disabled:opacity-60"
+              className="border-border-subtle bg-surface-raised text-ink focus:border-primary h-11 w-full rounded-lg border px-3 text-sm transition-colors disabled:opacity-60"
             >
               <option value="">— Select a guide —</option>
               {guides.map((guide) => {

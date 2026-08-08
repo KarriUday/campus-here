@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 /**
- * Archivo is a grotesque with a wide weight range — it sets comfortably at
- * 13px in a table and still holds up at 120px in uppercase display.
- * JetBrains Mono carries every numeral, index and micro-label.
+ * Inter carries the whole interface, from a 13px table cell to a 110px
+ * headline. JetBrains Mono is reserved for codes that must not be misread —
+ * USNs and group codes — where a distinct 0/O and 1/l earns its place.
  */
-const archivo = Archivo({
-  variable: "--font-archivo",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -33,13 +33,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f2f0ec",
+  themeColor: "#f5f1e4",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${archivo.variable} ${mono.variable} h-full`}>
-      <body className="bg-bg text-ink grain min-h-full antialiased">
+    <html lang="en" className={`${inter.variable} ${mono.variable} h-full`}>
+      <body className="bg-bg text-ink min-h-full antialiased">
         {children}
       </body>
     </html>
