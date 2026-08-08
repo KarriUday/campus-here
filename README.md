@@ -171,6 +171,57 @@ is what makes an allocation run reproducible.
 
 ---
 
+## Guide allocation
+
+`src/lib/allocation-engine.ts` is pure — no database import — so it unit-tests
+without a connection and the dry-run preview provably executes the same code as
+the committed run.
+
+Groups propose down their six ranked preferences; each guide holds the best
+proposals up to capacity and releases the rest. **A guide ranks competing
+proposals by:**
+
+1. domain match
+2. higher group average CGPA
+3. earlier preference submission
+4. group code ascending
+
+The fourth is a deterministic final tiebreak, so identical input always yields
+an identical matching — §11 asks for this choice to be explicit rather than
+accidental.
+
+Manual assignments are never recomputed: they consume capacity before matching
+begins and their groups leave the market. `findBlockingPair()` verifies
+stability, and a run that fails its own check is refused rather than written.
+Committing happens inside a serializable transaction.
+
+## Communications
+
+Email and WhatsApp are **dry-run by default**. A dry run is recorded exactly
+like a live one — an `EmailMessage` row, a `Notification` row per recipient,
+delivery counts — but with `mode=DRY_RUN` throughout, and it is never reported
+as delivered. Set `MAIL_DRY_RUN=false` / `WHATSAPP_DRY_RUN=false` with real
+credentials to go live.
+
+Recipients are always resolved server-side from the caller's identity: a guide
+addressing "their students" gets the members of the groups they actually guide,
+and asking for the whole cycle is silently narrowed rather than honoured.
+Everyone is BCC'd, so students never see each other's addresses. Attachments
+are capped at 20MB in total.
+
+Per-faculty SMTP credentials are encrypted at rest with AES-256-GCM
+(`src/server/services/crypto.ts`) and never returned by any endpoint once
+saved. GCM is authenticated, so a tampered ciphertext fails loudly instead of
+decrypting to garbage.
+
+The student inbox uses two tiers, the same arrangement as the prototype:
+server-sent events for speed, and `GET /api/notifications?since=` polling as
+the guarantee. On serverless the SSE function is killed at its execution limit,
+so the stream is expected to end and reconnect — polling is what ensures no
+message is missed.
+
+---
+
 ## Originality filter
 
 `src/server/services/similarity.ts`. Every score is computed server-side; the
