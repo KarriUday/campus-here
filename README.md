@@ -7,10 +7,20 @@ A role-based platform for academic project cycles: group formation, title
 originality checking, guide allocation, review scheduling and reporting for
 Admin, Student and Faculty users.
 
-> **Status:** under construction. Scaffold, data model, authentication, seed
-> data and the application shell are complete; the feature modules land in
-> later phases and their routes currently say so explicitly rather than
-> showing sample data.
+All 30 screens are wired to real API routes, real JWT auth and real database
+writes. Nothing renders sample data in place of a query.
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | layering, the pure/impure split, request lifecycle, serverless decisions |
+| [Data model](docs/DATA-MODEL.md) | ERD, the 12 database-enforced invariants, normalisation rationale |
+| [Algorithms](docs/ALGORITHMS.md) | TF-IDF originality and Gale-Shapley, worked through on real data |
+| [API reference](docs/API.md) | every route with its method, roles and behaviour |
+| [Feature matrix](docs/FEATURE-MATRIX.md) | §9 compliance: feature → routes → models → how it was verified |
+| [User guide](docs/USER-GUIDE.md) | per-role walkthrough |
+| [Deployment](docs/DEPLOYMENT.md) | Vercel, managed Postgres, cron, going live with email |
 
 ---
 
@@ -92,6 +102,7 @@ refuses to run when `NODE_ENV=production` unless `SEED_ALLOW_PRODUCTION=true`.
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:check` | Connectivity smoke check through the real client |
 | `npm run cron` | Local reminder dispatcher (production uses Vercel Cron) |
+| `npm run test:e2e` | Browser self-test against a running dev server (`-- --shots` for screenshots) |
 
 ---
 
@@ -314,6 +325,34 @@ cycles. Accounts created by an import get the password in
 `DEFAULT_IMPORT_PASSWORD`; students are expected to reset it.
 
 ---
+
+## Deliberate deviations from the specification
+
+Each was a judgement call, not an omission.
+
+| Deviation | Why |
+|---|---|
+| **Role dropdown → signed-in role badge** | A client-side role switch cannot coexist with real JWT auth. The cycle selector, Presentation/Detailed toggle and Share link all survive. |
+| **`node-cron` → Vercel Cron in production** | §8 anticipated this. An in-process schedule cannot survive on serverless. `npm run cron` keeps the local path against the same route. |
+| **ExcelJS instead of SheetJS** | SheetJS's community build silently drops cell styles on write, so it cannot produce the formatted header §10 requires. Verified by round-trip. |
+| **15-day reminders added** | Promised by both the spec and the prototype's Reviews screen; the prototype only ever generated 7-day. |
+| **40 seeded guides, not 12** | 300 students form 75 groups at a hard cap of 2 groups per guide, so fewer than 38 guides makes the matching infeasible by construction. |
+| **Seed uses `@example.edu`** | The repository is public. The live test recipient comes from the uncommitted `DEMO_STUDENT_EMAIL`. |
+| **SSE reconnects under serverless** | The function is killed at its execution limit by design; `?since=` polling is the delivery guarantee. |
+
+## Verification
+
+`npm run verify` — typecheck, lint, 121 unit tests, production build.
+`npm run test:e2e` — 18 browser-driven checks against a running server.
+
+Unit tests cover the originality thresholds including the ≥95% block case,
+TF-IDF cosine and each lexical sub-signal, Gale-Shapley stability, capacity and
+determinism, the CSV validators, PDF date and phase extraction, schedule
+conflict rules, reminder status transitions and AES round-tripping.
+
+A further 129 API-level checks were run against PostgreSQL across the build
+phases; [the feature matrix](docs/FEATURE-MATRIX.md) records what each one
+proved.
 
 ## Licence
 
