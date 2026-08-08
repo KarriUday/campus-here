@@ -391,7 +391,7 @@ Each was a judgement call, not an omission.
 
 `npm run verify` — typecheck, lint, 121 unit tests, production build.
 `npm run test:feature` — 134 API-level checks against PostgreSQL, in 6 suites.
-`npm run test:e2e` — 18 browser-driven checks against a running server.
+`npm run test:e2e` — 23 browser-driven checks against a running server.
 `npm run test:all` — all three, in that order.
 
 Unit tests cover the originality thresholds including the ≥95% block case,

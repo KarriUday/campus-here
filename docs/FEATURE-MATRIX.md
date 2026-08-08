@@ -8,8 +8,14 @@ This table is filled in from actual runs. The "Verified" column cites checks
 that were executed, not intentions. Nothing in the application writes to
 component state or `localStorage` in place of the database.
 
-**Totals:** 121 unit tests · 129 API-level checks across phases F–L · 18
-browser-driven checks · `npm run verify` green.
+**Totals:** 121 unit tests · 134 API-level checks in six reproducible suites ·
+23 browser-driven checks · `npm run verify` green.
+
+The public landing page at `/` is the one deliberate exception and is not
+listed below. It is static marketing copy with no data layer by design — it
+renders before anyone authenticates, so it has nothing to query. Every figure
+it quotes is prose, not a rendered query result, and it is covered by the
+browser self-test rather than this matrix.
 
 ---
 
