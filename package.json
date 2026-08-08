@@ -19,7 +19,9 @@
     "db:check": "tsx scripts/db-check.ts",
     "db:reset": "prisma migrate reset",
     "postinstall": "prisma generate",
-    "test:e2e": "tsx scripts/self-test.ts"
+    "test:e2e": "tsx scripts/self-test.ts",
+    "test:feature": "tsx tests/feature/run.ts",
+    "test:all": "npm run verify && npm run test:feature && npm run test:e2e"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
