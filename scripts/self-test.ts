@@ -340,7 +340,64 @@ async function main() {
       .catch(() => false);
     check("a drawer link navigates and closes the drawer", closed);
     if (SHOTS) await mobilePage.screenshot({ path: `${SHOT_DIR}/mobile-375.png`, fullPage: true });
+
+    // The public landing page is the largest single surface in the app and is
+    // reachable signed out, so it needs its own pass rather than riding on the
+    // authenticated walk.
+    current.path = "/";
+    await mobilePage.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: NAV_TIMEOUT });
+    const landingOverflow = await mobilePage.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    check(
+      "the landing page does not scroll horizontally at 375px",
+      landingOverflow <= 1,
+      `${landingOverflow}px overflow`,
+    );
     await mobile.close();
+
+    console.log("\n=== 6b. the public landing page ===");
+    const publicCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const publicPage = await publicCtx.newPage();
+    watch(publicPage, () => `landing ${current.path}`);
+    await publicPage.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: NAV_TIMEOUT });
+    await publicPage.waitForTimeout(1200);
+
+    const landing = await publicPage.evaluate(() => {
+      // Derive the targets from the nav rather than hardcoding them, so this
+      // checks the real invariant: every in-page link lands on a section.
+      const anchors = Array.from(document.querySelectorAll('nav a[href^="#"]')).map(
+        (a) => (a.getAttribute("href") ?? "").slice(1),
+      );
+      const missing = anchors.filter((id) => id && !document.getElementById(id));
+      return {
+        heading: (document.querySelector("h1")?.textContent ?? "").trim().slice(0, 40),
+        anchors: anchors.length,
+        missing,
+        // A colour field that never painted would leave the hero on bare cream.
+        heroPainted:
+          getComputedStyle(document.querySelector("section")!).backgroundColor !==
+          "rgba(0, 0, 0, 0)",
+      };
+    });
+    check("the landing page renders its headline", landing.heading.length > 0, landing.heading);
+    check(
+      "every nav anchor lands on a real section",
+      landing.anchors > 0 && landing.missing.length === 0,
+      landing.missing.length ? `missing: ${landing.missing.join(", ")}` : `${landing.anchors} anchors`,
+    );
+    check("the hero colour field paints", landing.heroPainted);
+
+    // Signed out, the only way in is the sign-in link.
+    await publicPage.getByRole("link", { name: "Sign in", exact: true }).first().click();
+    await publicPage.waitForURL(/\/login/, { timeout: NAV_TIMEOUT });
+    check("the landing page links into sign-in", publicPage.url().includes("/login"));
+    if (SHOTS) {
+      await publicPage.goto(`${BASE}/`, { waitUntil: "networkidle", timeout: NAV_TIMEOUT });
+      await publicPage.waitForTimeout(1200);
+      await publicPage.screenshot({ path: `${SHOT_DIR}/landing.png`, fullPage: true });
+    }
+    await publicCtx.close();
 
     console.log("\n=== 7. keyboard and labelling ===");
     current.path = "/login";
