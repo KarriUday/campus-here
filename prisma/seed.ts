@@ -11,7 +11,12 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
-import { normalizeTitle } from "../src/server/services/similarity";
+import {
+  buildCorpusIndex,
+  checkTitle,
+  normalizeTitle,
+  type CorpusEntry,
+} from "../src/server/services/similarity";
 import { DOMAINS, FACULTY, FIRST_NAMES, LAST_NAMES, VENUES } from "./seed-data/people";
 import { CURRENT_TITLES, TITLE_CORPUS } from "./seed-data/titles";
 
@@ -388,6 +393,54 @@ async function main() {
     });
   }
   console.log(`  ${allocatedGroups.length} submitted titles`);
+
+  // --- originality scores --------------------------------------------------
+  // Run every seeded title through the real engine against the rest of the
+  // corpus. Without this the Title Registry ships with an empty Similarity
+  // column and a permanently zero "Flagged" count — the screen would look
+  // broken even though the engine behind it works.
+  const scorable = await prisma.projectTitle.findMany({
+    where: {
+      OR: [{ cycleId: major.id }, { source: "IMPORTED_CORPUS" }],
+      approvalStatus: { not: "REJECTED" },
+    },
+    select: {
+      id: true,
+      title: true,
+      normalizedTitle: true,
+      domainLabel: true,
+      guideLabel: true,
+      cycleLabel: true,
+      domain: { select: { name: true } },
+    },
+  });
+
+  const corpus: CorpusEntry[] = scorable.map((row) => ({
+    id: row.id,
+    title: row.title,
+    normalizedTitle: row.normalizedTitle,
+    domainLabel: row.domain?.name ?? row.domainLabel,
+    guideLabel: row.guideLabel,
+    cycleLabel: row.cycleLabel,
+  }));
+  const corpusIndex = buildCorpusIndex(corpus);
+
+  let flagged = 0;
+  for (const row of scorable) {
+    // excludeId keeps a title from matching itself at 100%.
+    const report = checkTitle(row.title, corpusIndex, { excludeId: row.id });
+    if (report.score >= 0.8) flagged += 1;
+    await prisma.projectTitle.update({
+      where: { id: row.id },
+      data: {
+        similarityScore: report.score,
+        similarityReport: JSON.parse(JSON.stringify(report)),
+      },
+    });
+  }
+  console.log(
+    `  ${scorable.length} titles scored against the corpus (${flagged} at or above 80%)`,
+  );
 
   // --- review sessions, attendance, evaluation -----------------------------
   let sessionCount = 0;
