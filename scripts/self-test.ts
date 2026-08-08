@@ -65,30 +65,46 @@ function watch(page: Page, where: () => string) {
  * dev server compiling a route for the first time.
  */
 async function login(page: Page, email: string) {
-  await page.goto(`${BASE}/login`, { waitUntil: "networkidle", timeout: NAV_TIMEOUT });
+  let lastError = "";
 
-  const emailBox = page.getByLabel("Email");
-  const passwordBox = page.getByLabel("Password");
+  // Retry the whole submit. A click that lands before React has attached its
+  // handler posts nothing and simply leaves us on /login; waiting longer on a
+  // single attempt cannot recover from that, so re-submit instead.
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await page.goto(`${BASE}/login`, { waitUntil: "networkidle", timeout: NAV_TIMEOUT });
 
-  // These are controlled React inputs. Filling before hydration writes to the
-  // DOM, then hydration re-renders from empty state and the value is lost —
-  // the form then posts blank fields and the API answers 400. Fill and verify.
-  for (let attempt = 0; attempt < 5; attempt++) {
-    await emailBox.fill(email);
-    await passwordBox.fill(PASSWORD);
-    if ((await emailBox.inputValue()) === email && (await passwordBox.inputValue()) === PASSWORD) {
-      break;
+    const emailBox = page.getByLabel("Email");
+    const passwordBox = page.getByLabel("Password");
+
+    // Controlled React inputs: filling before hydration writes to the DOM,
+    // then hydration re-renders from empty state and the value is lost.
+    for (let fill = 0; fill < 8; fill++) {
+      await emailBox.fill(email);
+      await passwordBox.fill(PASSWORD);
+      const ok =
+        (await emailBox.inputValue()) === email &&
+        (await passwordBox.inputValue()) === PASSWORD;
+      if (ok) break;
+      await page.waitForTimeout(250);
     }
-    await page.waitForTimeout(300);
-  }
 
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForFunction(
-    () => /^\/(admin|student|faculty)/.test(window.location.pathname),
-    undefined,
-    { timeout: NAV_TIMEOUT },
-  );
-  await page.waitForLoadState("networkidle", { timeout: NAV_TIMEOUT });
+    await page.getByRole("button", { name: "Sign in" }).click();
+    try {
+      // Client-side router.replace fires no `load` event, so poll the path.
+      await page.waitForFunction(
+        () => /^\/(admin|student|faculty)/.test(window.location.pathname),
+        undefined,
+        { timeout: 20_000 },
+      );
+      await page.waitForLoadState("networkidle", { timeout: NAV_TIMEOUT });
+      return;
+    } catch {
+      const alerts = await page.locator('[role="alert"]').allTextContents();
+      lastError = alerts.filter(Boolean).join(" | ") || "no error shown, still on /login";
+      console.log(`        login attempt ${attempt} for ${email} failed: ${lastError}`);
+    }
+  }
+  throw new Error(`could not sign in as ${email} after 3 attempts — ${lastError}`);
 }
 
 async function logout(page: Page) {
@@ -113,6 +129,39 @@ const FACULTY_ROUTES = [
   "/faculty/title-approval",
 ];
 
+/**
+ * Is the h1 actually painted, or only present in the DOM?
+ *
+ * The titles animate up from behind a clipping mask. If that animation never
+ * runs the text still has textContent and still reports as "visible" to
+ * Playwright — it is simply translated outside its `overflow: hidden` parent
+ * and invisible to a human. So walk up to the nearest clipping ancestor and
+ * require the heading to actually overlap it.
+ */
+async function headingIsPainted(page: Page) {
+  return page.evaluate(() => {
+    const h1 = document.querySelector("h1");
+    if (!h1) return { painted: false, why: "no h1" };
+    const text = (h1.textContent ?? "").trim();
+    if (!text) return { painted: false, why: "empty h1" };
+
+    const box = h1.getBoundingClientRect();
+    if (box.height === 0 || box.width === 0) return { painted: false, why: "zero box" };
+
+    for (let node = h1.parentElement; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (!/hidden|clip/.test(style.overflowY + style.overflow)) continue;
+      const clip = node.getBoundingClientRect();
+      const overlap = Math.min(box.bottom, clip.bottom) - Math.max(box.top, clip.top);
+      if (overlap < box.height * 0.5) {
+        return { painted: false, why: `clipped: ${Math.round(overlap)}/${Math.round(box.height)}px visible` };
+      }
+      break;
+    }
+    return { painted: true, why: text.slice(0, 40) };
+  });
+}
+
 async function walk(page: Page, label: string, routes: string[], current: { path: string }) {
   let ok = 0;
   for (const route of routes) {
@@ -122,9 +171,15 @@ async function walk(page: Page, label: string, routes: string[], current: { path
       timeout: NAV_TIMEOUT,
     });
     const status = response?.status() ?? 0;
-    const heading = await page.locator("h1").first().textContent();
-    if (status === 200 && heading && heading.trim().length > 0) ok += 1;
-    else console.log(`        ${route} -> ${status} heading=${heading}`);
+    // Poll rather than sleep a flat interval: the mount reveal usually lands
+    // well inside 750ms, and 30 screens of padding adds up.
+    let heading = await headingIsPainted(page);
+    for (let i = 0; i < 10 && !heading.painted; i++) {
+      await page.waitForTimeout(150);
+      heading = await headingIsPainted(page);
+    }
+    if (status === 200 && heading.painted) ok += 1;
+    else console.log(`        ${route} -> ${status} heading=${heading.why}`);
     if (SHOTS) {
       await page.screenshot({
         path: `${SHOT_DIR}/${route.replace(/\//g, "_").replace(/^_/, "")}.png`,
@@ -132,7 +187,7 @@ async function walk(page: Page, label: string, routes: string[], current: { path
       });
     }
   }
-  check(`${label}: all ${routes.length} screens render with a heading`, ok === routes.length,
+  check(`${label}: all ${routes.length} screens show a painted heading`, ok === routes.length,
     `${ok}/${routes.length}`);
 }
 

@@ -115,7 +115,7 @@ export default async function ReportsPage() {
             {REPORTS.map((report) => (
               <li
                 key={report.type}
-                className="border-border-subtle flex flex-wrap items-start justify-between gap-3 rounded-xl border p-4"
+                className="border-border-subtle flex flex-wrap items-start justify-between gap-3 border p-4"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-ink text-sm font-medium">{report.title}</p>

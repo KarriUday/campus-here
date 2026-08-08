@@ -116,15 +116,12 @@ export default async function StudentsPage({
               result set is a shareable URL. */}
           <form method="get" className="flex flex-wrap items-end gap-3">
             <div className="min-w-56 flex-1">
-              <label
-                htmlFor="student-search"
-                className="text-ink text-sm font-medium"
-              >
+              <label htmlFor="student-search" className="label-xs text-ink-tertiary">
                 Search
               </label>
-              <div className="relative mt-1.5">
+              <div className="relative mt-2">
                 <Search
-                  className="text-ink-tertiary pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+                  className="text-ink-tertiary pointer-events-none absolute top-1/2 left-0 size-4 -translate-y-1/2"
                   aria-hidden
                 />
                 <input
@@ -132,22 +129,19 @@ export default async function StudentsPage({
                   name="q"
                   defaultValue={query}
                   placeholder="USN, name or email"
-                  className="border-border bg-surface-raised text-ink placeholder:text-ink-tertiary h-10 w-full rounded-xl border pr-3 pl-9 text-sm"
+                  className="border-border-subtle text-ink placeholder:text-ink-tertiary hover:border-ink-tertiary focus:border-ink h-10 w-full border-b bg-transparent pr-3 pl-7 text-sm transition-colors"
                 />
               </div>
             </div>
             <div>
-              <label
-                htmlFor="student-grouped"
-                className="text-ink text-sm font-medium"
-              >
+              <label htmlFor="student-grouped" className="label-xs text-ink-tertiary">
                 Group status
               </label>
               <select
                 id="student-grouped"
                 name="grouped"
                 defaultValue={grouped}
-                className="border-border bg-surface-raised text-ink mt-1.5 h-10 rounded-xl border px-3 text-sm"
+                className="border-border-subtle text-ink hover:border-ink-tertiary focus:border-ink mt-2 h-10 border-b bg-transparent pr-6 text-sm transition-colors"
               >
                 <option value="">All students</option>
                 <option value="yes">In a group</option>
@@ -156,14 +150,14 @@ export default async function StudentsPage({
             </div>
             <button
               type="submit"
-              className="bg-primary hover:bg-primary-hover h-10 rounded-xl px-4 text-sm font-semibold text-white transition-colors"
+              className="label-xs bg-primary hover:bg-ink h-10 px-5 text-white transition-colors"
             >
               Apply
             </button>
             {(query || grouped) && (
               <Link
                 href="/admin/students"
-                className="text-ink-secondary hover:text-ink h-10 rounded-xl px-2 text-sm leading-10"
+                className="label-xs text-ink-tertiary hover:text-primary h-10 px-2 leading-10 transition-colors"
               >
                 Clear
               </Link>
@@ -222,7 +216,7 @@ export default async function StudentsPage({
                 {page > 1 && (
                   <Link
                     href={linkFor({ page: page - 1 })}
-                    className="border-border hover:bg-surface rounded-lg border px-3 py-1.5 text-sm"
+                    className="label-xs border-ink hover:bg-ink hover:text-bg border px-4 py-2 transition-colors"
                   >
                     Previous
                   </Link>
@@ -230,7 +224,7 @@ export default async function StudentsPage({
                 {page < pageCount && (
                   <Link
                     href={linkFor({ page: page + 1 })}
-                    className="border-border hover:bg-surface rounded-lg border px-3 py-1.5 text-sm"
+                    className="label-xs border-ink hover:bg-ink hover:text-bg border px-4 py-2 transition-colors"
                   >
                     Next
                   </Link>

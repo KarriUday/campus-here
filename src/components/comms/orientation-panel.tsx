@@ -213,7 +213,7 @@ export function OrientationPanel({
                     type="file"
                     accept="audio/*"
                     onChange={(event) => setAudio(event.target.files?.[0] ?? null)}
-                    className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer rounded-xl border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
+                    className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
                   />
                   <p className="text-ink-tertiary mt-1.5 text-xs">Up to 8MB.</p>
                 </div>
@@ -242,7 +242,7 @@ export function OrientationPanel({
             orientations.map((item) => (
               <div
                 key={item.id}
-                className="border-border-subtle rounded-xl border p-4"
+                className="border-border-subtle border p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -266,7 +266,7 @@ export function OrientationPanel({
 
                 {item.text && (
                   <>
-                    <p className="text-ink-secondary bg-surface mt-3 rounded-lg p-3 text-sm leading-relaxed">
+                    <p className="text-ink-secondary mt-3 border-primary border-l-2 pl-4 py-1 text-sm leading-relaxed">
                       {item.text}
                     </p>
                     <Button

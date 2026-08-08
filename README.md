@@ -46,6 +46,46 @@ gating, and Vercel Cron able to invoke a route directly — which an in-process
 
 ---
 
+## Design system
+
+Constructivist editorial: near-black ink on a warm off-white, one hot accent,
+and structure carried by hairline rules and whitespace rather than cards and
+shadows.
+
+| Token | Value | Used for |
+|---|---|---|
+| `--color-bg` | `#F2F0EC` | Page ground |
+| `--color-ink` | `#0A0A0A` | Body text, borders, rules |
+| `--color-primary` | `#FF3B00` | The single accent — actions, index numerals, alerts |
+| `--radius-*` | `0px` | Everything is square |
+| `--shadow-*` | `none` | A rule does the work a shadow would |
+
+Type is **Archivo** for display and body, **JetBrains Mono** for labels,
+numerals and codes. Four utilities carry the voice: `display` (oversized
+uppercase, `line-height: 0.92`), `label-xs` (mono, tracked-out caps),
+`numeral` (tabular figures for statistics) and `index-num` (the bracketed
+`[01]` motif that numbers navigation, tables and steps).
+
+Motion lives in `src/components/motion/`: masked line reveals, a marquee
+context strip, count-up statistics, page transitions and magnetic buttons,
+over a fixed SVG grain overlay. There is no scroll hijacking and no custom
+cursor. Every primitive honours `prefers-reduced-motion` — `Reveal` renders
+its content statically rather than animating it.
+
+Two constraints are load-bearing rather than stylistic:
+
+- **`Reveal` defaults to scroll-triggered but page titles pass `mode="mount"`.**
+  A masked reveal hides its content until the animation runs, so anything
+  above the fold must animate on mount; an IntersectionObserver that never
+  fires would otherwise leave the heading permanently invisible. The browser
+  self-test asserts each `h1` is *painted* — overlapping its clipping
+  ancestor — not merely present in the DOM.
+- **The mask is padded by `0.14em` and pulled back with a negative margin.**
+  The display face is set below its own ink height, so a bare
+  `overflow: hidden` shaves the caps and descenders.
+
+---
+
 ## Getting started
 
 **Prerequisites:** Node.js 20+ and either Docker Desktop or a Postgres
@@ -343,16 +383,25 @@ Each was a judgement call, not an omission.
 ## Verification
 
 `npm run verify` — typecheck, lint, 121 unit tests, production build.
+`npm run test:feature` — 134 API-level checks against PostgreSQL, in 6 suites.
 `npm run test:e2e` — 18 browser-driven checks against a running server.
+`npm run test:all` — all three, in that order.
 
 Unit tests cover the originality thresholds including the ≥95% block case,
 TF-IDF cosine and each lexical sub-signal, Gale-Shapley stability, capacity and
 determinism, the CSV validators, PDF date and phase extraction, schedule
 conflict rules, reminder status transitions and AES round-tripping.
 
-A further 129 API-level checks were run against PostgreSQL across the build
-phases; [the feature matrix](docs/FEATURE-MATRIX.md) records what each one
-proved.
+The feature suites live in `tests/feature/` and re-seed before each run, so
+they are reproducible rather than a record of one session;
+[the feature matrix](docs/FEATURE-MATRIX.md) records what each one proved.
+
+The seed scores all 70 titles through the real originality engine, so the
+Title Registry opens with genuine percentages rather than an empty column.
+Nothing in the corpus reaches the 80% warning band — the closest pair,
+*Campus Security using Face ID* and *Smart Attendance via Face Recognition*,
+scores 58% because they share a technique rather than a project. That figure
+is the engine's own verdict, not a placeholder.
 
 ## Licence
 

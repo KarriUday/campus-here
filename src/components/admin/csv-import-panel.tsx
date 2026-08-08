@@ -172,7 +172,7 @@ export function CsvImportPanel({
           <>
             <a
               href={`/api/samples?kind=${entity}`}
-              className="border-border bg-surface-raised text-ink hover:bg-surface inline-flex h-8 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold transition-colors"
+              className="border-border bg-surface-raised text-ink hover:bg-surface inline-flex h-8 items-center gap-1.5 border px-3 text-xs font-semibold transition-colors"
             >
               <Download className="size-3.5" aria-hidden />
               Sample CSV
@@ -215,7 +215,7 @@ export function CsvImportPanel({
                 setFile(event.target.files?.[0] ?? null);
                 setResult(null);
               }}
-              className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer rounded-xl border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
+              className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
             />
             <p className="text-ink-tertiary mt-1.5 text-xs">{hint}</p>
           </div>

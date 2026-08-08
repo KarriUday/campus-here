@@ -122,7 +122,7 @@ export function InviteSearch({
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search by name or USN…"
             aria-label="Search available students"
-            className="border-border bg-surface-raised text-ink placeholder:text-ink-tertiary h-10 w-full rounded-xl border pr-3 pl-9 text-sm"
+            className="border-border bg-surface-raised text-ink placeholder:text-ink-tertiary h-10 w-full border pr-3 pl-9 text-sm"
           />
         </div>
 
@@ -143,7 +143,7 @@ export function InviteSearch({
           {students.map((student) => (
             <div
               key={student.id}
-              className="border-border-subtle flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5"
+              className="border-border-subtle flex items-center justify-between gap-3 border px-4 py-2.5"
             >
               <div className="min-w-0">
                 <p className="text-ink truncate text-sm font-medium">
@@ -225,7 +225,7 @@ export function IncomingInvites({ invites }: { invites: IncomingInvite[] }) {
           pending.map((invite) => (
             <div
               key={invite.id}
-              className="border-border-subtle flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3"
+              className="border-border-subtle flex flex-wrap items-center justify-between gap-3 border px-4 py-3"
             >
               <div className="min-w-0">
                 <p className="text-ink text-sm font-medium">

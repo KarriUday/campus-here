@@ -108,7 +108,7 @@ export function DomainForm({
                   <label
                     key={domain.id}
                     className={cn(
-                      "cursor-pointer rounded-xl border p-4 transition-colors",
+                      "cursor-pointer border p-4 transition-colors",
                       selected
                         ? "border-primary bg-primary-soft"
                         : "border-border hover:border-ink-tertiary",
@@ -190,7 +190,7 @@ export function DomainForm({
           />
 
           {blocked && (
-            <p className="bg-error-soft text-error-ink rounded-lg px-3 py-2 text-sm">
+            <p className="bg-error-soft text-error-ink px-3 py-2 text-sm">
               Saving is disabled while the title scores 95% or above. Change the
               title to something distinct from the match shown above.
             </p>

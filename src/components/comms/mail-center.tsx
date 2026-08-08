@@ -204,7 +204,7 @@ export function MailCenter({
             )}
           </div>
           {config.dryRun && (
-            <p className="bg-warning-soft text-warning-ink rounded-lg px-3 py-2 text-sm">
+            <p className="bg-warning-soft text-warning-ink px-3 py-2 text-sm">
               Dry-run mode is on. Sends are fully recorded and students still
               receive in-app notifications, but no message leaves this machine.
               Set <code className="mono">MAIL_DRY_RUN=false</code> to go live.
@@ -276,7 +276,7 @@ export function MailCenter({
               type="file"
               multiple
               onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
-              className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer rounded-xl border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
+              className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
             />
             <p
               className={

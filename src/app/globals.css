@@ -1,61 +1,65 @@
 @import "tailwindcss";
 
 /*
- * Campus Here design tokens.
+ * Campus Here — Constructivist editorial.
  *
- * Hybrid palette: Apple-style neutrals, spacing and typography (spec §4) with
- * fuchsia #d946ef carried over from the clickable prototype as the primary
- * action colour. Light theme only — matches the prototype's `color-scheme: light`.
+ * Near-black on warm off-white, one hot accent, hairline rules instead of
+ * cards, oversized uppercase display type, monospaced numerals. Square
+ * corners and no drop shadows: structure comes from rules and whitespace.
+ *
+ * Token *names* are unchanged from the previous system on purpose — every
+ * component already consumes them, so the whole app moves together.
  */
 @theme {
-  /* Surfaces & text — spec §4 */
-  --color-bg: #ffffff;
-  --color-surface: #f5f5f7;
-  --color-surface-raised: #ffffff;
-  --color-border: #d2d2d7;
-  --color-border-subtle: #e8e8ed;
-  --color-ink: #1d1d1f;
-  --color-ink-secondary: #6e6e73;
-  --color-ink-tertiary: #86868b;
+  /* Canvas & ink */
+  --color-bg: #f2f0ec;
+  --color-surface: #eae7e1;
+  --color-surface-raised: #f7f6f3;
+  --color-border: #0a0a0a;
+  --color-border-subtle: #cfcbc2;
+  --color-ink: #0a0a0a;
+  --color-ink-secondary: #56534c;
+  --color-ink-tertiary: #8a867d;
 
-  /* Primary — prototype fuchsia scale */
-  --color-brand-50: #fdf4ff;
-  --color-brand-100: #fae8ff;
-  --color-brand-200: #f5d0fe;
-  --color-brand-300: #f0abfc;
-  --color-brand-400: #e879f9;
-  --color-brand-500: #d946ef;
-  --color-brand-600: #c026d3;
-  --color-brand-700: #a21caf;
-  --color-primary: #d946ef;
-  --color-primary-hover: #c026d3;
-  --color-primary-soft: #fdf4ff;
+  /* The single hot accent. */
+  --color-brand-50: #fff1ec;
+  --color-brand-100: #ffded3;
+  --color-brand-200: #ffc0ac;
+  --color-brand-300: #ff9a7a;
+  --color-brand-400: #ff6b3d;
+  --color-brand-500: #ff3b00;
+  --color-brand-600: #e03400;
+  --color-brand-700: #b32900;
+  --color-primary: #ff3b00;
+  --color-primary-hover: #0a0a0a;
+  --color-primary-soft: #fff1ec;
 
-  /* Status — spec §4 */
-  --color-success: #34c759;
-  --color-success-soft: #e8f8ed;
-  --color-success-ink: #1a7f37;
-  --color-warning: #ff9f0a;
-  --color-warning-soft: #fff4e5;
-  --color-warning-ink: #9a5b00;
-  --color-error: #ff3b30;
-  --color-error-soft: #ffecea;
-  --color-error-ink: #b3261e;
-  --color-info: #0071e3;
-  --color-info-soft: #e8f2fd;
-  --color-info-ink: #0057b0;
+  /* Status — deliberately restrained so the accent stays the hottest thing. */
+  --color-success: #0b6b3a;
+  --color-success-soft: #e4ede7;
+  --color-success-ink: #0b6b3a;
+  --color-warning: #8a6a00;
+  --color-warning-soft: #f1ece0;
+  --color-warning-ink: #6b5200;
+  --color-error: #ff3b00;
+  --color-error-soft: #ffe9e2;
+  --color-error-ink: #b32900;
+  --color-info: #0a0a0a;
+  --color-info-soft: #e6e3dc;
+  --color-info-ink: #0a0a0a;
 
-  /* Radii — spec §4 asks for 12–20px */
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
+  /* Square. Structure comes from rules, not rounding. */
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
 
-  /* Soft shadows */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
-  --shadow-raised: 0 2px 6px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.07);
-  --shadow-glow: 0 0 0 4px rgba(217, 70, 239, 0.14);
+  /* No drop shadows; a hairline does the work. */
+  --shadow-card: none;
+  --shadow-raised: none;
+  --shadow-glow: 0 0 0 2px var(--color-ink);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, monospace;
 }
 
 :root {
@@ -72,26 +76,128 @@
     background-color: var(--color-bg);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    /* Slightly tightened, as a grotesque wants to be set. */
+    letter-spacing: -0.011em;
   }
 
-  /* Every interactive element gets a visible focus ring (spec §4 accessibility). */
+  /* A hard offset outline rather than a soft ring. */
   :focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid var(--color-ink);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 0;
   }
 
   ::selection {
-    background-color: rgba(217, 70, 239, 0.24);
+    background-color: var(--color-primary);
+    color: #fff;
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.03em;
   }
 }
 
+/* --- typographic utilities ------------------------------------------- */
+
+/** Oversized uppercase display, as on the reference. */
+@utility display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+}
+
+/** The tiny all-caps label that annotates everything. */
+@utility label-xs {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
 @utility mono {
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-/* Screen-reader-only text that becomes visible on focus (skip links). */
+/** Big figures: monospaced so columns of numbers align. */
+@utility numeral {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+}
+
+/* --- the [01] index motif -------------------------------------------- */
+
+@utility index-num {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-tertiary);
+}
+
+/* --- grain overlay ---------------------------------------------------- */
+
+/**
+ * Fixed film grain over the whole page. Pointer-events off so it never
+ * intercepts a click, and hidden from assistive tech.
+ */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain::after {
+    display: none;
+  }
+}
+
+/* --- motion ----------------------------------------------------------- */
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility marquee-track {
+  animation: marquee 40s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(10, 10, 10, 0.05),
+    rgba(10, 10, 10, 0.1),
+    rgba(10, 10, 10, 0.05)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/** Screen-reader-only text that becomes visible on focus (skip links). */
 @utility sr-only-focusable {
   position: absolute;
   width: 1px;
@@ -113,26 +219,6 @@
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-@utility skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.04),
-    rgba(0, 0, 0, 0.08),
-    rgba(0, 0, 0, 0.04)
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -140,5 +226,8 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .marquee-track {
+    animation: none !important;
   }
 }

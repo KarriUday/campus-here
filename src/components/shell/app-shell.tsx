@@ -12,6 +12,8 @@ import {
   ShareLinkButton,
   UserMenu,
 } from "@/components/shell/navbar-controls";
+import { Marquee } from "@/components/motion/marquee";
+import { PageTransition } from "@/components/motion/page-transition";
 import type { CycleSummary } from "@/lib/cycle";
 import { navItemsFor, navLabel, type NavMode } from "@/lib/navigation";
 import type { Role } from "@/generated/prisma/enums";
@@ -31,6 +33,10 @@ function isActivePath(pathname: string, href: string, roleRoot: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/**
+ * Numbered index navigation — [01], [02] — rather than icon-and-label rows.
+ * The icon stays as a quiet secondary cue at the right edge.
+ */
 function NavList({
   role,
   mode,
@@ -46,8 +52,8 @@ function NavList({
   const roleRoot = items[0]?.href ?? "/";
 
   return (
-    <nav aria-label="Main" className="flex flex-col gap-0.5">
-      {items.map((item) => {
+    <nav aria-label="Main" className="flex flex-col">
+      {items.map((item, index) => {
         const active = isActivePath(pathname, item.href, roleRoot);
         const Icon = item.icon;
         return (
@@ -57,14 +63,33 @@ function NavList({
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-              active
-                ? "bg-primary-soft text-primary font-semibold"
-                : "text-ink-secondary hover:bg-surface hover:text-ink",
+              "group border-border-subtle flex items-center gap-3 border-b py-3 transition-colors",
+              active ? "text-ink" : "text-ink-secondary hover:text-ink",
             )}
           >
-            <Icon className="size-4 shrink-0" aria-hidden />
-            <span className="truncate">{navLabel(item, mode)}</span>
+            <span
+              className={cn(
+                "index-num shrink-0 transition-colors",
+                active && "text-primary",
+              )}
+            >
+              [{String(index + 1).padStart(2, "0")}]
+            </span>
+            <span
+              className={cn(
+                "flex-1 truncate text-[0.8125rem] leading-tight",
+                active && "font-semibold",
+              )}
+            >
+              {navLabel(item, mode)}
+            </span>
+            <Icon
+              className={cn(
+                "size-3.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-60",
+                active && "text-primary opacity-100",
+              )}
+              aria-hidden
+            />
           </Link>
         );
       })}
@@ -84,25 +109,29 @@ export function AppShell({
   // Closed by the nav links themselves via onNavigate, plus the backdrop and
   // the close button — no route-change effect needed.
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const cycleName = cycles.find((c) => c.code === selectedCycleCode)?.name ?? "";
 
   return (
     <div className="min-h-dvh">
-      <a href="#main" className="sr-only-focusable bg-primary z-50 m-2 rounded-lg px-3 py-2 text-sm text-white">
+      <a
+        href="#main"
+        className="sr-only-focusable bg-ink label-xs z-50 m-2 px-3 py-2 text-white"
+      >
         Skip to content
       </a>
 
-      <header className="border-border bg-surface-raised/80 sticky top-0 z-40 border-b backdrop-blur-xl">
-        <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+      <header className="border-ink bg-bg/90 sticky top-0 z-40 border-b backdrop-blur-md">
+        <div className="flex h-16 items-center gap-4 px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
             aria-label="Open navigation"
-            className="text-ink-secondary hover:bg-surface -ml-1 rounded-lg p-2 transition-colors lg:hidden"
+            className="text-ink hover:text-primary -ml-1 p-2 transition-colors lg:hidden"
           >
             <Menu className="size-5" aria-hidden />
           </button>
 
-          <Brand className="min-w-0" />
+          <Brand className="min-w-0" markOnlyOnMobile />
 
           <div className="ml-auto flex items-center gap-2">
             <CycleSwitcher cycles={cycles} selectedCode={selectedCycleCode} />
@@ -111,18 +140,39 @@ export function AppShell({
             <UserMenu name={user.name} email={user.email} role={role} />
           </div>
         </div>
+
+        {/* A running strip of context, the way the reference annotates itself. */}
+        <div className="border-border-subtle bg-surface label-xs text-ink-tertiary border-t py-1.5">
+          <Marquee>
+            <span className="flex items-center gap-8">
+              <span>{cycleName || "No cycle selected"}</span>
+              <span className="text-primary">✳</span>
+              <span>BMS Institute of Technology and Management</span>
+              <span className="text-primary">✳</span>
+              <span>Department of Computer Science and Engineering</span>
+              <span className="text-primary">✳</span>
+              <span>Project Tracking &amp; Allocation</span>
+              <span className="text-primary">✳</span>
+              <span>Signed in as {role}</span>
+              <span className="text-primary">✳</span>
+            </span>
+          </Marquee>
+        </div>
       </header>
 
       <div className="flex">
-        <aside className="border-border sticky top-16 hidden h-[calc(100dvh-4rem)] w-64 shrink-0 overflow-y-auto border-r px-3 py-4 lg:block">
-          <p className="text-ink-tertiary px-3 pb-2 text-[10px] font-semibold tracking-wider uppercase">
-            Navigation
+        <aside className="border-border sticky top-[6.25rem] hidden h-[calc(100dvh-6.25rem)] w-64 shrink-0 overflow-y-auto border-r px-5 py-6 lg:block">
+          <p className="label-xs text-ink-tertiary border-border-subtle mb-1 border-b pb-3">
+            Index / {navItemsFor(role, mode).length}
           </p>
           <NavList role={role} mode={mode} pathname={pathname} />
         </aside>
 
-        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          {children}
+        <main
+          id="main"
+          className="min-w-0 flex-1 px-4 py-10 sm:px-8 lg:px-12 lg:py-14"
+        >
+          <PageTransition>{children}</PageTransition>
         </main>
       </div>
 
@@ -133,8 +183,8 @@ export function AppShell({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="absolute inset-0 bg-black/25"
+              transition={{ duration: 0.2 }}
+              className="bg-ink/30 absolute inset-0"
               onClick={() => setDrawerOpen(false)}
               aria-hidden
             />
@@ -145,16 +195,16 @@ export function AppShell({
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="bg-surface-raised absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto px-3 py-4 shadow-xl"
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-bg border-ink absolute inset-y-0 left-0 flex w-80 max-w-[88vw] flex-col overflow-y-auto border-r px-5 py-6"
             >
-              <div className="mb-4 flex items-center justify-between px-1">
+              <div className="border-border-subtle mb-4 flex items-center justify-between border-b pb-4">
                 <Brand size="sm" showTagline={false} />
                 <button
                   type="button"
                   onClick={() => setDrawerOpen(false)}
                   aria-label="Close navigation"
-                  className="text-ink-secondary hover:bg-surface rounded-lg p-2 transition-colors"
+                  className="text-ink hover:text-primary p-2 transition-colors"
                 >
                   <X className="size-5" aria-hidden />
                 </button>

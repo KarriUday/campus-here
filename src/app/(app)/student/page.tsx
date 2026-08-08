@@ -190,7 +190,7 @@ export default async function StudentDashboardPage() {
               reminders.map((reminder) => (
                 <div
                   key={reminder.id}
-                  className="border-border-subtle rounded-xl border p-3"
+                  className="border-border-subtle border p-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-ink text-sm font-medium">
@@ -225,7 +225,7 @@ export default async function StudentDashboardPage() {
             orientations.map((orientation) => (
               <div
                 key={orientation.id}
-                className="border-border-subtle rounded-xl border p-4"
+                className="border-border-subtle border p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -239,7 +239,7 @@ export default async function StudentDashboardPage() {
                   <Badge tone="neutral">{orientation.type}</Badge>
                 </div>
                 {orientation.text && (
-                  <p className="text-ink-secondary bg-surface mt-3 rounded-lg p-3 text-sm leading-relaxed">
+                  <p className="text-ink-secondary mt-3 border-primary border-l-2 pl-4 py-1 text-sm leading-relaxed">
                     {orientation.text}
                   </p>
                 )}

@@ -42,7 +42,7 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="absolute inset-0 bg-black/25"
+            className="bg-ink/30 absolute inset-0"
             onClick={onClose}
             aria-hidden
           />
@@ -52,17 +52,17 @@ export function Modal({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="border-border bg-surface-raised shadow-raised relative w-full max-w-lg rounded-2xl border outline-none"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="border-ink bg-bg relative w-full max-w-lg border"
           >
             <div className="flex items-start justify-between gap-4 px-5 pt-5">
               <div>
-                <h2 className="text-ink text-base font-semibold">{title}</h2>
+                <h2 className="display text-ink text-xl">{title}</h2>
                 {description && (
-                  <p className="text-ink-secondary mt-1 text-sm">
+                  <p className="text-ink-secondary mt-2 text-sm leading-relaxed">
                     {description}
                   </p>
                 )}
@@ -71,7 +71,7 @@ export function Modal({
                 type="button"
                 onClick={onClose}
                 aria-label="Close dialog"
-                className="text-ink-tertiary hover:text-ink rounded p-1 transition-colors"
+                className="text-ink-tertiary hover:text-primary p-1 transition-colors"
               >
                 <X className="size-4" aria-hidden />
               </button>

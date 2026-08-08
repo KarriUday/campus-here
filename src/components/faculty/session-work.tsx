@@ -167,7 +167,7 @@ export function AttendanceMarker({
                   {roster.map((entry) => (
                     <li
                       key={entry.studentId}
-                      className="border-border-subtle flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-2.5"
+                      className="border-border-subtle flex flex-wrap items-center justify-between gap-3 border px-4 py-2.5"
                     >
                       <span className="min-w-0">
                         <span className="text-ink text-sm font-medium">
@@ -188,7 +188,7 @@ export function AttendanceMarker({
                           aria-checked={entry.status === "PRESENT"}
                           onClick={() => setStatus(entry.studentId, "PRESENT")}
                           className={cn(
-                            "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                            "flex items-center gap-1 px-3 py-1.5 text-xs font-semibold transition-colors",
                             entry.status === "PRESENT"
                               ? "bg-success-soft text-success-ink"
                               : "text-ink-secondary hover:bg-surface",
@@ -203,7 +203,7 @@ export function AttendanceMarker({
                           aria-checked={entry.status === "ABSENT"}
                           onClick={() => setStatus(entry.studentId, "ABSENT")}
                           className={cn(
-                            "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                            "flex items-center gap-1 px-3 py-1.5 text-xs font-semibold transition-colors",
                             entry.status === "ABSENT"
                               ? "bg-error-soft text-error-ink"
                               : "text-ink-secondary hover:bg-surface",

@@ -130,17 +130,14 @@ export default async function AdminDashboardPage() {
             title="End-to-end flow"
             subtitle="How a cycle moves from upload to final review."
           />
-          <CardBody className="grid gap-3 sm:grid-cols-2">
-            {FLOW.map((item) => (
-              <div
-                key={item.step}
-                className="border-border-subtle bg-surface rounded-xl border p-4"
-              >
-                <p className="text-ink-tertiary text-[10px] font-semibold tracking-wider uppercase">
-                  {item.step}
+          <CardBody className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+            {FLOW.map((item, i) => (
+              <div key={item.step} className="border-ink border-t pt-3">
+                <p className="index-num text-primary">
+                  [{String(i + 1).padStart(2, "0")}]
                 </p>
-                <p className="text-ink mt-1 text-sm font-medium">{item.title}</p>
-                <p className="text-ink-secondary mt-1 text-xs leading-relaxed">
+                <p className="display text-ink mt-3 text-lg">{item.title}</p>
+                <p className="text-ink-secondary mt-2 text-xs leading-relaxed">
                   {item.detail}
                 </p>
               </div>
@@ -153,7 +150,7 @@ export default async function AdminDashboardPage() {
             title="Registry"
             subtitle="Live counts for this cycle."
           />
-          <CardBody className="space-y-3">
+          <CardBody className="py-0">
             {[
               { label: "Registered titles", value: titleCount, href: "/admin/titles" },
               { label: "Active guides", value: facultyCount, href: "/admin/faculty" },
@@ -162,10 +159,12 @@ export default async function AdminDashboardPage() {
               <Link
                 key={row.label}
                 href={row.href}
-                className="border-border-subtle hover:bg-surface flex items-center justify-between rounded-xl border px-4 py-3 transition-colors"
+                className="border-border-subtle hover:text-primary group flex items-baseline justify-between gap-4 border-b py-4 transition-colors last:border-b-0"
               >
-                <span className="text-ink-secondary text-sm">{row.label}</span>
-                <span className="text-ink mono text-sm font-semibold">
+                <span className="label-xs text-ink-tertiary group-hover:text-primary">
+                  {row.label}
+                </span>
+                <span className="numeral text-ink group-hover:text-primary text-2xl">
                   {row.value}
                 </span>
               </Link>

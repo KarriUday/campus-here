@@ -8,18 +8,21 @@ export const INSTITUTION = "BMS Institute of Technology and Management";
 /**
  * The BMSIT lockup. The logo lives at the path the specification names, so
  * dropping the real artwork over `public/assets/bmsit-logo.png` updates the
- * navbar, login screen and admin hero at once with no code change.
+ * navbar, login screen and hero at once with no code change.
  */
 export function Brand({
   size = "md",
   showTagline = true,
   className,
+  /** Drop to the mark alone on narrow screens, where the navbar has no room. */
+  markOnlyOnMobile = false,
 }: {
   size?: "sm" | "md" | "lg";
   showTagline?: boolean;
   className?: string;
+  markOnlyOnMobile?: boolean;
 }) {
-  const dimension = size === "lg" ? 56 : size === "md" ? 36 : 28;
+  const dimension = size === "lg" ? 44 : size === "md" ? 30 : 24;
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
@@ -28,14 +31,16 @@ export function Brand({
         alt={INSTITUTION}
         width={dimension}
         height={dimension}
-        className="rounded-lg"
+        // Squared off and desaturated to sit inside the palette rather than
+        // fight it; the real crest will read the same way.
+        className="grayscale contrast-125"
         priority
       />
-      <div className="min-w-0">
+      <div className={cn("min-w-0", markOnlyOnMobile && "hidden sm:block")}>
         <p
           className={cn(
-            "text-ink leading-tight font-semibold tracking-tight",
-            size === "lg" ? "text-xl" : "text-sm",
+            "display text-ink truncate leading-none",
+            size === "lg" ? "text-2xl" : "text-sm",
           )}
         >
           {PRODUCT_NAME}
@@ -43,11 +48,11 @@ export function Brand({
         {showTagline && (
           <p
             className={cn(
-              "text-ink-secondary truncate leading-tight",
-              size === "lg" ? "text-sm" : "text-xs",
+              "label-xs text-ink-tertiary mt-1.5 truncate",
+              size === "lg" && "text-[0.75rem]",
             )}
           >
-            {PRODUCT_TAGLINE}
+            BMSIT / CSE
           </p>
         )}
       </div>

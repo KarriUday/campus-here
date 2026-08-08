@@ -166,7 +166,7 @@ export function SchedulePanel({
           </div>
 
           {conflicts.length > 0 && (
-            <div className="bg-warning-soft rounded-xl px-4 py-3">
+            <div className="bg-warning-soft px-4 py-3">
               <p className="text-warning-ink text-sm font-medium">
                 This slot clashes with:
               </p>

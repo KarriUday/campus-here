@@ -109,7 +109,7 @@ export function DomainSettings({ domains }: { domains: DomainRow[] }) {
           {domains.map((domain) => (
             <li
               key={domain.id}
-              className="border-border-subtle flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3"
+              className="border-border-subtle flex flex-wrap items-center justify-between gap-3 border px-4 py-3"
             >
               <div className="min-w-0">
                 <p className="text-ink text-sm font-medium">
@@ -186,7 +186,7 @@ export function CapacitySettings({ rules }: { rules: CapacityRow[] }) {
         {rules.map((rule) => (
           <div
             key={rule.id}
-            className="border-border-subtle flex flex-wrap items-end gap-3 rounded-xl border px-4 py-3"
+            className="border-border-subtle flex flex-wrap items-end gap-3 border px-4 py-3"
           >
             <div className="min-w-40 flex-1">
               <p className="text-ink text-sm font-medium">

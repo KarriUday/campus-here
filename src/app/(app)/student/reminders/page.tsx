@@ -71,7 +71,7 @@ export default async function RemindersPage() {
             withLiveStatus.map((reminder) => (
               <div
                 key={reminder.id}
-                className="border-border-subtle rounded-xl border p-4"
+                className="border-border-subtle border p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -90,7 +90,7 @@ export default async function RemindersPage() {
                   </Badge>
                 </div>
 
-                <p className="text-ink-secondary bg-surface mt-3 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                <p className="text-ink-secondary mt-3 border-primary border-l-2 pl-4 py-1 text-sm whitespace-pre-wrap">
                   {reminder.body}
                 </p>
               </div>

@@ -71,9 +71,9 @@ function SignalBar({ label, value }: { label: string; value: number }) {
           {value.toFixed(2)}
         </span>
       </div>
-      <div className="bg-surface mt-1 h-1.5 overflow-hidden rounded-full">
+      <div className="bg-surface mt-1 h-1.5 overflow-hidden">
         <div
-          className="bg-primary h-full rounded-full"
+          className="bg-primary h-full"
           style={{ width: `${Math.max(2, value * 100)}%` }}
         />
       </div>
@@ -192,7 +192,7 @@ export function DuplicateChecker({
       )}
 
       {error && (
-        <p role="alert" className="bg-error-soft text-error-ink rounded-lg px-3 py-2 text-sm">
+        <p role="alert" className="bg-error-soft text-error-ink px-3 py-2 text-sm">
           {error}
         </p>
       )}
@@ -201,7 +201,7 @@ export function DuplicateChecker({
         <div aria-live="polite" className="space-y-4">
           <div
             className={cn(
-              "flex flex-wrap items-center gap-3 rounded-xl px-4 py-3",
+              "flex flex-wrap items-center gap-3 px-4 py-3",
               report.verdict === "BLOCKED" && "bg-error-soft",
               report.verdict === "WARNING" && "bg-warning-soft",
               report.verdict === "ALLOWED" && "bg-success-soft",

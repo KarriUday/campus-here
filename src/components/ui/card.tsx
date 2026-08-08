@@ -1,16 +1,15 @@
 import type { HTMLAttributes, ReactNode } from "react";
+import { Counter } from "@/components/motion/counter";
 import { cn } from "@/lib/utils";
 
-export function Card({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
+/**
+ * A "card" here is a ruled panel, not a floating box: a hairline border, no
+ * rounding, no shadow. Grouping comes from the rule and the whitespace.
+ */
+export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "border-border bg-surface-raised shadow-card rounded-2xl border",
-        className,
-      )}
+      className={cn("border-border-subtle bg-surface-raised border", className)}
       {...props}
     />
   );
@@ -30,65 +29,82 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-start justify-between gap-3 px-5 pt-5",
+        "border-border-subtle flex flex-wrap items-start justify-between gap-4 border-b px-5 py-4",
         className,
       )}
     >
       <div className="min-w-0">
-        <h2 className="text-ink text-base font-semibold tracking-tight">
+        <h2 className="text-ink text-sm font-semibold tracking-tight uppercase">
           {title}
         </h2>
         {subtitle && (
-          <p className="text-ink-secondary mt-0.5 text-sm">{subtitle}</p>
+          <p className="text-ink-secondary mt-1 max-w-2xl text-sm leading-relaxed">
+            {subtitle}
+          </p>
         )}
       </div>
-      {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
     </div>
   );
 }
 
-export function CardBody({
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
+export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("p-5", className)} {...props} />;
 }
 
-/** Headline number tile used across the three dashboards. */
+/**
+ * The headline figure. An oversized monospaced numeral over a tiny caps
+ * label, counting up as it scrolls into view.
+ */
 export function StatCard({
   label,
   value,
   meta,
   tone = "neutral",
+  index,
 }: {
   label: string;
   value: ReactNode;
   meta?: string;
   tone?: "neutral" | "info" | "success" | "warning" | "error";
+  /** Optional [NN] index for the grid position. */
+  index?: number;
 }) {
-  const toneClass = {
-    neutral: "bg-surface text-ink-secondary",
-    info: "bg-info-soft text-info-ink",
-    success: "bg-success-soft text-success-ink",
-    warning: "bg-warning-soft text-warning-ink",
-    error: "bg-error-soft text-error-ink",
-  }[tone];
+  const accent =
+    tone === "warning" || tone === "error" ? "text-primary" : "text-ink";
 
   return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-ink-secondary text-sm font-medium">{label}</p>
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
-            toneClass,
-          )}
-        >
-          {tone === "neutral" ? "info" : tone}
+    <div className="border-border-subtle group relative border-t pt-4">
+      <div className="flex items-baseline justify-between">
+        <span className="label-xs text-ink-tertiary">
+          {index !== undefined ? `[${String(index).padStart(2, "0")}] ` : ""}
+          {label}
         </span>
+        {tone !== "neutral" && (
+          <span
+            className={cn(
+              "size-1.5 shrink-0",
+              tone === "success" && "bg-success",
+              tone === "warning" && "bg-primary",
+              tone === "error" && "bg-primary",
+              tone === "info" && "bg-ink",
+            )}
+            aria-hidden
+          />
+        )}
       </div>
-      <p className="text-ink mono mt-3 text-3xl font-semibold">{value}</p>
-      {meta && <p className="text-ink-tertiary mt-1 text-xs">{meta}</p>}
-    </Card>
+
+      <p className={cn("numeral mt-3 text-5xl font-medium", accent)}>
+        {typeof value === "number" || typeof value === "string" ? (
+          <Counter value={value} />
+        ) : (
+          value
+        )}
+      </p>
+
+      {meta && (
+        <p className="text-ink-tertiary mt-2 text-xs leading-snug">{meta}</p>
+      )}
+    </div>
   );
 }

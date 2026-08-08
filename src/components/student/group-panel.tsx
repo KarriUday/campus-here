@@ -249,7 +249,7 @@ export function GroupPanel({
           {checklist.map((item) => (
             <div
               key={item.label}
-              className="border-border-subtle flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5"
+              className="border-border-subtle flex items-center justify-between gap-3 border px-4 py-2.5"
             >
               <span className="flex min-w-0 items-center gap-2.5">
                 {item.done ? (

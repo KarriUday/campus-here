@@ -22,9 +22,7 @@ export function CycleSwitcher({
 
   return (
     <label className="flex items-center gap-2">
-      <span className="text-ink-secondary hidden text-xs font-medium sm:inline">
-        Cycle
-      </span>
+      <span className="label-xs text-ink-tertiary hidden sm:inline">Cycle</span>
       <select
         aria-label="Project cycle"
         value={selectedCode}
@@ -36,7 +34,7 @@ export function CycleSwitcher({
             router.refresh();
           });
         }}
-        className="border-border bg-surface-raised text-ink h-9 max-w-[13rem] rounded-lg border px-2.5 text-sm"
+        className="label-xs border-border-subtle text-ink hover:border-ink focus:border-ink h-8 max-w-[13rem] border-b bg-transparent pr-4 transition-colors"
       >
         {cycles.map((cycle) => (
           <option key={cycle.id} value={cycle.code}>
@@ -66,7 +64,7 @@ export function ModeToggle({ mode }: { mode: NavMode }) {
             router.refresh();
           });
         }}
-        className="border-border bg-surface-raised text-ink h-9 rounded-lg border px-2.5 text-sm"
+        className="label-xs border-border-subtle text-ink hover:border-ink focus:border-ink h-8 border-b bg-transparent pr-4 transition-colors"
       >
         <option value="detailed">Detailed</option>
         <option value="present">Presentation</option>
@@ -157,29 +155,23 @@ export function UserMenu({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="border-border bg-surface-raised hover:bg-surface flex h-9 items-center gap-2 rounded-lg border px-2.5 transition-colors"
+        className="label-xs border-ink text-ink hover:bg-ink hover:text-bg flex h-8 items-center gap-2 border px-3 transition-colors"
       >
-        <span className="bg-primary-soft text-primary flex size-6 items-center justify-center rounded-full">
-          <User className="size-3.5" aria-hidden />
-        </span>
-        <span className="text-ink hidden max-w-[9rem] truncate text-sm font-medium sm:inline">
-          {name}
-        </span>
+        <User className="size-3.5" aria-hidden />
+        <span className="hidden max-w-[9rem] truncate sm:inline">{name}</span>
       </button>
 
       {open && (
         <div
           role="menu"
-          className="border-border bg-surface-raised shadow-raised absolute right-0 z-50 mt-2 w-60 rounded-xl border p-1.5"
+          className="border-ink bg-bg absolute right-0 z-50 mt-2 w-64 border p-2"
         >
           <div className="px-2.5 py-2">
-            <p className="text-ink truncate text-sm font-medium">{name}</p>
-            <p className="text-ink-secondary truncate text-xs">{email}</p>
-            <span className="bg-primary-soft text-primary mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
-              {role}
-            </span>
+            <p className="text-ink truncate text-sm font-semibold uppercase">{name}</p>
+            <p className="text-ink-tertiary mono mt-0.5 truncate text-xs">{email}</p>
+            <span className="label-xs text-primary mt-2 inline-block">[ {role} ]</span>
           </div>
-          <div className="bg-border-subtle my-1 h-px" />
+          <div className="bg-border-subtle my-2 h-px" />
           <button
             type="button"
             role="menuitem"
@@ -191,7 +183,7 @@ export function UserMenu({
               router.refresh();
             }}
             className={cn(
-              "text-ink hover:bg-surface flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
+              "label-xs text-ink hover:bg-ink hover:text-bg flex w-full items-center gap-2 px-2.5 py-2.5 transition-colors",
               signingOut && "opacity-50",
             )}
           >

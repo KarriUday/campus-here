@@ -101,7 +101,7 @@ export default async function InvitesPage() {
               {group.invites.map((invite) => (
                 <li
                   key={invite.id}
-                  className="border-border-subtle flex items-center justify-between rounded-xl border px-4 py-2.5 text-sm"
+                  className="border-border-subtle flex items-center justify-between border px-4 py-2.5 text-sm"
                 >
                   <span className="text-ink">
                     {invite.toStudent.fullName}{" "}

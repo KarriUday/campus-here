@@ -102,7 +102,7 @@ export default async function TimelinePage() {
             return (
               <div
                 key={phase.key}
-                className="border-border-subtle rounded-xl border px-4 py-3"
+                className="border-border-subtle border px-4 py-3"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardBody } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
+import { Reveal } from "@/components/motion/reveal";
 
 export function LoginForm() {
   const router = useRouter();
@@ -47,60 +47,68 @@ export function LoginForm() {
   }
 
   return (
-    <Card>
-      <CardBody>
-        <h1 className="text-ink text-lg font-semibold tracking-tight">
-          Sign in
-        </h1>
-        <p className="text-ink-secondary mt-1 text-sm">
-          Use the account issued by your department.
-        </p>
+    <div>
+      <p className="label-xs text-ink-tertiary mb-5">[01] &nbsp; Access</p>
 
-        <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
-          <Input
-            label="Email"
-            type="email"
-            name="email"
-            autoComplete="username"
-            placeholder="you@bmsit.in"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Password"
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+      <Reveal mode="mount">
+        <h1 className="display text-5xl sm:text-6xl">Sign in</h1>
+      </Reveal>
 
-          {error && (
-            <p
-              role="alert"
-              className="bg-error-soft text-error-ink rounded-lg px-3 py-2 text-sm"
-            >
-              {error}
-            </p>
-          )}
+      <p className="text-ink-secondary border-border-subtle mt-5 border-b pb-6 text-sm leading-relaxed">
+        Use the account issued by your department. Roles are resolved on the
+        server — you land on your own section.
+      </p>
 
-          <Button type="submit" size="lg" loading={loading} className="w-full">
-            Sign in
-          </Button>
-        </form>
+      <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-7">
+        <Input
+          label="Email"
+          type="email"
+          name="email"
+          autoComplete="username"
+          placeholder="you@bmsit.in"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Input
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-        <div className="mt-4 text-center">
-          <Link
-            href="/forgot-password"
-            className="text-ink-secondary hover:text-primary rounded text-sm transition-colors"
+        {error && (
+          <p
+            role="alert"
+            className="border-primary text-primary label-xs border-l-2 py-2 pl-3"
           >
-            Forgot your password?
-          </Link>
-        </div>
-      </CardBody>
-    </Card>
+            {error}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          loading={loading}
+          magnetic={false}
+          className="w-full"
+        >
+          Sign in →
+        </Button>
+      </form>
+
+      <div className="border-border-subtle mt-8 border-t pt-5">
+        <Link
+          href="/forgot-password"
+          className="label-xs text-ink-tertiary hover:text-primary transition-colors"
+        >
+          Forgot your password?
+        </Link>
+      </div>
+    </div>
   );
 }

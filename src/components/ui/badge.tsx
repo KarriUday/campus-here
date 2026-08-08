@@ -1,15 +1,19 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/** Mirrors the prototype's five `pill()` tones. */
+/** Five tones, carried over from the prototype's `pill()` semantics. */
 export type BadgeTone = "neutral" | "info" | "success" | "warning" | "error";
 
+/**
+ * Square, uppercase, hairline. Only error and warning take the hot accent, so
+ * a page full of neutral badges stays quiet and a real problem shouts.
+ */
 const TONES: Record<BadgeTone, string> = {
-  neutral: "bg-surface text-ink-secondary ring-border",
-  info: "bg-info-soft text-info-ink ring-info-soft",
-  success: "bg-success-soft text-success-ink ring-success-soft",
-  warning: "bg-warning-soft text-warning-ink ring-warning-soft",
-  error: "bg-error-soft text-error-ink ring-error-soft",
+  neutral: "border-border-subtle text-ink-secondary",
+  info: "border-ink text-ink",
+  success: "border-success text-success",
+  warning: "border-primary text-primary",
+  error: "border-primary bg-primary text-white",
 };
 
 export function Badge({
@@ -24,7 +28,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset",
+        "label-xs inline-flex items-center border px-2 py-1 font-medium",
         TONES[tone],
         className,
       )}

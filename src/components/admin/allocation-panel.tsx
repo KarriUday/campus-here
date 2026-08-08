@@ -201,7 +201,7 @@ export function AllocationPanel({
                     .map(([rank, count]) => (
                       <span
                         key={rank}
-                        className="border-border-subtle rounded-lg border px-3 py-1.5 text-xs"
+                        className="border-border-subtle border px-3 py-1.5 text-xs"
                       >
                         Choice #{rank}:{" "}
                         <span className="text-ink mono font-semibold">
@@ -212,7 +212,7 @@ export function AllocationPanel({
                 </div>
               </div>
 
-              <details className="border-border-subtle rounded-xl border p-3">
+              <details className="border-border-subtle border p-3">
                 <summary className="text-ink cursor-pointer text-sm font-medium">
                   Proposed matching ({preview.rows.length})
                 </summary>
@@ -262,7 +262,7 @@ export function AllocationPanel({
             unallocated.map((row) => (
               <div
                 key={row.groupId}
-                className="border-border-subtle flex flex-wrap items-end justify-between gap-3 rounded-xl border px-4 py-3"
+                className="border-border-subtle flex flex-wrap items-end justify-between gap-3 border px-4 py-3"
               >
                 <div className="min-w-0">
                   <p className="text-ink text-sm font-medium">
@@ -289,7 +289,7 @@ export function AllocationPanel({
                         [row.groupId]: event.target.value,
                       }))
                     }
-                    className="border-border bg-surface-raised text-ink h-9 max-w-64 rounded-lg border px-2 text-sm"
+                    className="border-border bg-surface-raised text-ink h-9 max-w-64 border px-2 text-sm"
                   >
                     <option value="">— Choose a guide —</option>
                     {guides

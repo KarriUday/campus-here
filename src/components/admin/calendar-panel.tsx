@@ -161,7 +161,7 @@ export function CalendarPanel({
               type="file"
               accept="application/pdf,.pdf"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer rounded-xl border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
+              className="border-border bg-surface-raised text-ink file:bg-surface file:text-ink mt-1.5 block w-full cursor-pointer border text-sm file:mr-3 file:cursor-pointer file:border-0 file:px-3 file:py-2.5 file:text-sm file:font-medium"
             />
             <p className="text-ink-tertiary mt-1.5 text-xs">
               Up to 10MB. Both a 15-day and a 7-day reminder are created for
@@ -250,11 +250,11 @@ export function CalendarPanel({
           />
 
           {latest && (
-            <details className="border-border-subtle rounded-xl border p-3">
+            <details className="border-border-subtle border p-3">
               <summary className="text-ink cursor-pointer text-sm font-medium">
                 Extracted text (first 4,000 characters)
               </summary>
-              <pre className="text-ink-secondary bg-surface mt-3 max-h-72 overflow-auto rounded-lg p-3 text-xs whitespace-pre-wrap">
+              <pre className="text-ink-secondary border-border-subtle mt-3 max-h-72 overflow-auto border p-3 text-xs whitespace-pre-wrap">
                 {latest.textPreview}
               </pre>
               <p className="text-ink-tertiary mt-2 text-xs">

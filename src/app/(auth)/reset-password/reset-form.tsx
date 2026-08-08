@@ -69,7 +69,7 @@ export function ResetPasswordForm() {
         </h1>
 
         {done ? (
-          <p className="text-success-ink bg-success-soft mt-4 rounded-lg px-3 py-2 text-sm">
+          <p className="text-success-ink bg-success-soft mt-4 px-3 py-2 text-sm">
             Password updated. Taking you to sign in…
           </p>
         ) : (
@@ -96,7 +96,7 @@ export function ResetPasswordForm() {
             {error && (
               <p
                 role="alert"
-                className="bg-error-soft text-error-ink rounded-lg px-3 py-2 text-sm"
+                className="bg-error-soft text-error-ink px-3 py-2 text-sm"
               >
                 {error}
               </p>

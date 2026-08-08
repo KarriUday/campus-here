@@ -12,6 +12,9 @@ export type Column<T> = {
 };
 
 /**
+ * A ruled index, not a boxed grid: hairline row rules, uppercase monospaced
+ * headers, and a [NN] index column so a long roster reads like a catalogue.
+ *
  * Wide tables scroll inside their own container so the page body never
  * scrolls horizontally on a phone.
  */
@@ -23,6 +26,7 @@ export function DataTable<T>({
   emptyDescription,
   emptyAction,
   className,
+  showIndex = true,
 }: {
   columns: Array<Column<T>>;
   rows: T[];
@@ -31,6 +35,7 @@ export function DataTable<T>({
   emptyDescription?: string;
   emptyAction?: ReactNode;
   className?: string;
+  showIndex?: boolean;
 }) {
   if (rows.length === 0) {
     return (
@@ -43,21 +48,24 @@ export function DataTable<T>({
   }
 
   return (
-    <div
-      className={cn(
-        "border-border overflow-x-auto rounded-xl border",
-        className,
-      )}
-    >
+    <div className={cn("overflow-x-auto", className)}>
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="bg-surface">
+          <tr className="border-border border-b">
+            {showIndex && (
+              <th
+                scope="col"
+                className="label-xs text-ink-tertiary w-12 py-3 pr-3 text-left font-medium"
+              >
+                №
+              </th>
+            )}
             {columns.map((col) => (
               <th
                 key={col.key}
                 scope="col"
                 className={cn(
-                  "text-ink-secondary px-4 py-3 text-left text-xs font-semibold tracking-wide uppercase whitespace-nowrap",
+                  "label-xs text-ink-tertiary px-3 py-3 text-left font-medium whitespace-nowrap",
                   col.numeric && "text-right",
                   col.className,
                 )}
@@ -67,14 +75,22 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-border-subtle divide-y">
+        <tbody>
           {rows.map((row, index) => (
-            <tr key={rowKey(row, index)} className="hover:bg-surface/60">
+            <tr
+              key={rowKey(row, index)}
+              className="border-border-subtle hover:bg-surface border-b transition-colors"
+            >
+              {showIndex && (
+                <td className="index-num py-3 pr-3 align-middle">
+                  [{String(index + 1).padStart(2, "0")}]
+                </td>
+              )}
               {columns.map((col) => (
                 <td
                   key={col.key}
                   className={cn(
-                    "text-ink px-4 py-3 align-middle",
+                    "text-ink px-3 py-3 align-middle",
                     col.numeric && "mono text-right",
                     col.className,
                   )}

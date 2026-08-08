@@ -97,7 +97,7 @@ export function TitleApprovals({ titles }: { titles: PendingTitle[] }) {
           />
           <CardBody className="space-y-3">
             {title.problemStatement && (
-              <p className="text-ink-secondary bg-surface rounded-lg p-3 text-sm leading-relaxed">
+              <p className="text-ink-secondary border-primary border-l-2 pl-4 py-1 text-sm leading-relaxed">
                 {title.problemStatement}
               </p>
             )}
