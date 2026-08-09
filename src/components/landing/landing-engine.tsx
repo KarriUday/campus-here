@@ -1,46 +1,55 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, Check, TriangleAlert, Cpu, Network } from "lucide-react";
+import { Check, Network, ScanSearch, TriangleAlert, X } from "lucide-react";
 import { Reveal } from "./motion";
-import { SectionHeading } from "./section-heading";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const VIEWPORT = { once: true, margin: "-60px" } as const;
 
-/** The worked example from the project report, which is also a unit test. */
 const MATCHES = [
-  { title: "Smart Attendance Face Recognition", score: 1.0, band: "blocked" },
-  { title: "Attendance Monitoring with Facial Biometrics", score: 0.86, band: "warning" },
-  { title: "Classroom Occupancy Analytics", score: 0.41, band: "allowed" },
+  {
+    title: "Smart Attendance Face Recognition",
+    score: 1,
+    label: "Blocked",
+    bar: "bg-[#e35d64]",
+    icon: X,
+  },
+  {
+    title: "Attendance Monitoring with Facial Biometrics",
+    score: 0.86,
+    label: "Review",
+    bar: "bg-[#e9ad4a]",
+    icon: TriangleAlert,
+  },
+  {
+    title: "Classroom Occupancy Analytics",
+    score: 0.41,
+    label: "Clear",
+    bar: "bg-[#55b780]",
+    icon: Check,
+  },
 ] as const;
 
-const BAND_STYLE = {
-  blocked: { bar: "bg-red-500", chip: "border-red-500/30 bg-red-500/10 text-red-400", label: "Blocked" },
-  warning: { bar: "bg-amber-500", chip: "border-amber-500/30 bg-amber-500/10 text-amber-400", label: "Warning" },
-  allowed: { bar: "bg-emerald-500", chip: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400", label: "Allowed" },
-} as const;
-
-/** How a guide ranks competing proposals, in order. */
 const TIEBREAKS = [
   "Domain match with the group's chosen area",
   "Higher group average CGPA",
   "Earlier preference submission",
-  "Group code ascending — the deterministic last word",
+  "Group code ascending for a deterministic result",
 ];
 
-function ScoreBar({ score, delay }: { score: number; delay: number }) {
+function ScoreBar({ score, delay, className }: { score: number; delay: number; className: string }) {
   const reduced = useReducedMotion();
-  const pct = `${Math.round(score * 100)}%`;
+  const width = `${Math.round(score * 100)}%`;
 
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-900 border border-white/5">
+    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
       <motion.div
-        className={`h-full rounded-full ${BAND_STYLE[score >= 0.95 ? "blocked" : score >= 0.8 ? "warning" : "allowed"].bar}`}
-        initial={reduced ? { width: pct } : { width: 0 }}
-        whileInView={{ width: pct }}
+        className={`h-full rounded-full ${className}`}
+        initial={reduced ? { width } : { width: 0 }}
+        whileInView={{ width }}
         viewport={VIEWPORT}
-        transition={{ duration: 1, delay, ease: EASE }}
+        transition={{ duration: 0.85, delay, ease: EASE }}
       />
     </div>
   );
@@ -48,151 +57,131 @@ function ScoreBar({ score, delay }: { score: number; delay: number }) {
 
 export function LandingEngine() {
   return (
-    <section id="engine" className="scroll-mt-24 py-20 sm:py-28">
-      <div className="relative rounded-[32px] sm:rounded-[44px] border border-white/10 bg-[#0A0E1A] p-6 sm:p-12 shadow-[0_20px_70px_rgba(0,0,0,0.5)] overflow-hidden">
-        {/* Background Radial Lights */}
-        <div className="pointer-events-none absolute -top-32 -left-32 size-96 rounded-full bg-sky-500/10 blur-[130px]" />
-        <div className="pointer-events-none absolute -bottom-32 -right-32 size-96 rounded-full bg-purple-500/10 blur-[130px]" />
-
-        <div className="relative z-10 mx-auto w-full max-w-6xl">
-          <SectionHeading
-            eyebrow="Under the hood"
-            title="Two engines doing the hard part"
-            body="Both are pure functions with no database import, so they unit-test without a connection — and a dry run provably executes the same code as the committed run."
-          />
-
-          <div className="mt-14 grid gap-6 lg:grid-cols-2">
-            {/* Originality Card */}
-            <Reveal className="h-full">
-              <div className="group h-full rounded-3xl border border-white/10 bg-[#101526]/80 p-7 backdrop-blur-xl transition-all duration-300 hover:border-sky-500/30 hover:bg-[#141B30]">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 font-mono text-[11px] font-semibold text-sky-400 uppercase tracking-wider">
-                    <Cpu className="size-3.5" />
-                    Originality
-                  </span>
-                  <span className="font-mono text-xs text-slate-400">TF-IDF + Cosine</span>
-                </div>
-                <h3 className="mt-4 text-xl font-bold tracking-tight text-white group-hover:text-sky-300 transition-colors">
-                  TF-IDF, corrected by four lexical signals
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                  Cosine alone under-reads a near-duplicate whose shared words are
-                  common across the corpus. Edit distance alone over-reads two
-                  unrelated titles of similar shape. The score weights cosine at
-                  0.65 and the strongest of Dice, containment, 3-gram Jaccard and
-                  Levenshtein at 0.35.
-                </p>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0F1D] p-4 sm:p-5">
-                  <p className="font-mono text-[11px] font-semibold tracking-widest text-slate-400 uppercase">
-                    Checking
-                  </p>
-                  <p className="mt-1 font-mono text-sm font-medium text-sky-200">
-                    “Smart Attendance via Face Recognition”
-                  </p>
-
-                  <ul className="mt-5 space-y-4">
-                    {MATCHES.map((match, i) => {
-                      const style = BAND_STYLE[match.band];
-                      return (
-                        <li key={match.title}>
-                          <div className="flex items-baseline justify-between gap-3">
-                            <span className="min-w-0 truncate text-xs text-slate-300">
-                              {match.title}
-                            </span>
-                            <span className="font-mono text-xs font-bold text-white shrink-0">
-                              {match.score.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="mt-1.5 flex items-center gap-3">
-                            <ScoreBar score={match.score} delay={0.15 + i * 0.15} />
-                            <span
-                              className={`shrink-0 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-semibold ${style.chip}`}
-                            >
-                              {style.label}
-                            </span>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-
-                  <p className="mt-5 text-xs text-slate-400 leading-relaxed border-t border-white/10 pt-3">
-                    Both titles reduce to{" "}
-                    <code className="rounded border border-sky-500/20 bg-sky-500/10 px-1.5 py-0.5 font-mono text-[11px] text-sky-300">
-                      attendance face recognition
-                    </code>
-                    . When two titles share a token set exactly, the score is forced
-                    to 1.00 — same words in any order is the same project.
-                  </p>
-                </div>
-
-                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-mono text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <Ban className="size-3.5 text-red-400" aria-hidden /> ≥ 0.95 blocked
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <TriangleAlert className="size-3.5 text-amber-400" aria-hidden /> 0.80–0.94 warning
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Check className="size-3.5 text-emerald-400" aria-hidden /> below 0.80 allowed
-                  </span>
-                </div>
-              </div>
-            </Reveal>
-
-            {/* Allocation Card */}
-            <Reveal delay={0.1} className="h-full">
-              <div className="group h-full rounded-3xl border border-white/10 bg-[#101526]/80 p-7 backdrop-blur-xl transition-all duration-300 hover:border-purple-500/30 hover:bg-[#141B30]">
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 font-mono text-[11px] font-semibold text-purple-400 uppercase tracking-wider">
-                    <Network className="size-3.5" />
-                    Allocation
-                  </span>
-                  <span className="font-mono text-xs text-slate-400">Gale-Shapley Algorithm</span>
-                </div>
-                <h3 className="mt-4 text-xl font-bold tracking-tight text-white group-hover:text-purple-300 transition-colors">
-                  Gale-Shapley, made reproducible
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                  Groups propose down their six ranked preferences; each guide holds
-                  the best proposals up to capacity and releases the rest. Manual
-                  assignments never get recomputed — they consume capacity before
-                  matching begins and leave the market.
-                </p>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0F1D] p-4 sm:p-5">
-                  <p className="font-mono text-[11px] font-semibold tracking-widest text-slate-400 uppercase">
-                    A guide ranks proposals by
-                  </p>
-                  <ol className="mt-4 space-y-3">
-                    {TIEBREAKS.map((rule, i) => (
-                      <motion.li
-                        key={rule}
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={VIEWPORT}
-                        transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
-                        className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#121728] p-2.5"
-                      >
-                        <span className="font-mono flex size-7 shrink-0 items-center justify-center rounded-lg border border-purple-500/30 bg-purple-500/10 text-xs font-bold text-purple-300">
-                          {i + 1}
-                        </span>
-                        <span className="text-xs sm:text-sm font-medium text-slate-200">{rule}</span>
-                      </motion.li>
-                    ))}
-                  </ol>
-                </div>
-
-                <p className="mt-5 text-xs text-slate-400 leading-relaxed">
-                  <span className="font-semibold text-white">Stability is checked, not assumed.</span>{" "}
-                  A blocking-pair search runs against the result, and a run that
-                  fails its own check is refused rather than written. Committing
-                  happens inside a serializable transaction.
-                </p>
-              </div>
-            </Reveal>
+    <section id="engine" className="scroll-mt-24 bg-[#242157] py-24 text-white sm:py-32">
+      <div className="mx-auto w-full max-w-[1180px] px-5 sm:px-8 lg:px-6">
+        <div className="grid gap-8 lg:grid-cols-[1fr_0.7fr] lg:items-end">
+          <div>
+            <p className="flex items-center gap-3 text-xs font-semibold tracking-[0.15em] text-[#ffb6ba] uppercase">
+              <span className="h-px w-8 bg-[#e35d64]" aria-hidden="true" />
+              Decision engines
+            </p>
+            <h2 className="mt-5 max-w-3xl text-3xl leading-[1.08] font-semibold tracking-[-0.045em] text-balance sm:text-4xl lg:text-[3.25rem]">
+              Difficult decisions, made explainable and repeatable.
+            </h2>
           </div>
+          <p className="max-w-lg text-sm leading-7 text-[#c9c8dc] lg:justify-self-end">
+            Both engines are pure functions. A preview and a committed run execute
+            the same code, and every result carries the evidence behind it.
+          </p>
+        </div>
+
+        <div className="mt-14 grid border-t border-l border-white/15 lg:grid-cols-2">
+          <Reveal className="h-full">
+            <article className="h-full border-r border-b border-white/15 bg-[#201e4d] p-6 sm:p-8">
+              <div className="flex items-center justify-between gap-5">
+                <span className="flex items-center gap-2 text-xs font-semibold tracking-[0.12em] text-[#ffb6ba] uppercase">
+                  <ScanSearch className="size-4" aria-hidden="true" />
+                  Originality
+                </span>
+                <span className="mono text-[0.65rem] text-[#aaa9c7]">TF-IDF + lexical signals</span>
+              </div>
+
+              <h3 className="mt-7 text-2xl font-semibold tracking-[-0.03em]">
+                Similarity that shows its work.
+              </h3>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#c9c8dc]">
+                Cosine similarity is combined with Dice, containment, 3-gram
+                Jaccard and Levenshtein signals, then enforced again when a title
+                is submitted.
+              </p>
+
+              <div className="mt-8 border border-white/15 bg-[#1a1941] p-5">
+                <p className="text-[0.62rem] font-semibold tracking-[0.12em] text-[#aaa9c7] uppercase">
+                  Checking proposal
+                </p>
+                <p className="mono mt-2 text-sm text-white">
+                  Smart Attendance via Face Recognition
+                </p>
+
+                <ul className="mt-6 space-y-5">
+                  {MATCHES.map((match, index) => (
+                    <li key={match.title}>
+                      <div className="mb-2 flex items-start justify-between gap-4">
+                        <span className="min-w-0 truncate text-xs text-[#d7d6e6]">
+                          {match.title}
+                        </span>
+                        <span className="mono shrink-0 text-xs font-semibold text-white">
+                          {match.score.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-[1fr_68px] items-center gap-3">
+                        <ScoreBar score={match.score} delay={0.12 + index * 0.12} className={match.bar} />
+                        <span className="flex items-center gap-1.5 text-[0.6rem] font-semibold text-[#c9c8dc]">
+                          <match.icon className="size-3" aria-hidden="true" />
+                          {match.label}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="mt-5 text-xs leading-5 text-[#aaa9c7]">
+                Scores at 0.95 or above are blocked; 0.80–0.94 requires review.
+              </p>
+            </article>
+          </Reveal>
+
+          <Reveal delay={0.08} className="h-full">
+            <article className="h-full border-r border-b border-white/15 bg-[#201e4d] p-6 sm:p-8">
+              <div className="flex items-center justify-between gap-5">
+                <span className="flex items-center gap-2 text-xs font-semibold tracking-[0.12em] text-[#ffb6ba] uppercase">
+                  <Network className="size-4" aria-hidden="true" />
+                  Allocation
+                </span>
+                <span className="mono text-[0.65rem] text-[#aaa9c7]">Gale–Shapley</span>
+              </div>
+
+              <h3 className="mt-7 text-2xl font-semibold tracking-[-0.03em]">
+                Stable by calculation, not assumption.
+              </h3>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-[#c9c8dc]">
+                Groups propose down six preferences. Guides hold the best proposals
+                up to capacity, while locked manual assignments remain untouched.
+              </p>
+
+              <div className="mt-8 border border-white/15 bg-[#1a1941] p-5">
+                <p className="text-[0.62rem] font-semibold tracking-[0.12em] text-[#aaa9c7] uppercase">
+                  Guide tie-break order
+                </p>
+                <ol className="mt-3">
+                  {TIEBREAKS.map((rule, index) => (
+                    <motion.li
+                      key={rule}
+                      initial={{ opacity: 0, x: -8 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={VIEWPORT}
+                      transition={{ duration: 0.45, delay: 0.12 + index * 0.08, ease: EASE }}
+                      className="grid grid-cols-[32px_1fr] items-center gap-3 border-b border-white/10 py-3.5 last:border-0"
+                    >
+                      <span className="mono text-xs font-semibold text-[#ffb6ba]">
+                        0{index + 1}
+                      </span>
+                      <span className="text-sm text-[#d7d6e6]">{rule}</span>
+                    </motion.li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="mt-5 flex items-start gap-3 border-l-2 border-[#e35d64] pl-4">
+                <Check className="mt-0.5 size-4 shrink-0 text-[#70cb98]" aria-hidden="true" />
+                <p className="text-xs leading-5 text-[#aaa9c7]">
+                  A blocking-pair search validates the result. An unstable run is
+                  refused before the database transaction begins.
+                </p>
+              </div>
+            </article>
+          </Reveal>
         </div>
       </div>
     </section>

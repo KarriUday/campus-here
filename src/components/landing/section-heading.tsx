@@ -1,6 +1,5 @@
 import { Reveal } from "./motion";
 
-/** Shared eyebrow + headline + lede block, centred above each section. */
 export function SectionHeading({
   eyebrow,
   title,
@@ -11,20 +10,21 @@ export function SectionHeading({
   body?: string;
 }) {
   return (
-    <div className="mx-auto max-w-2xl text-center">
-      <Reveal y={16}>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#7B88D6]/40 bg-[#161D42]/90 px-4 py-1.5 text-xs font-semibold text-[#C8D1F8] backdrop-blur-md shadow-[0_0_15px_rgba(75,99,246,0.15)]">
+    <div className="max-w-3xl">
+      <Reveal y={12}>
+        <span className="flex items-center gap-3 text-xs font-semibold tracking-[0.14em] text-[#b9272f] uppercase">
+          <span className="h-px w-8 bg-[#b9272f]" aria-hidden="true" />
           {eyebrow}
         </span>
       </Reveal>
-      <Reveal delay={0.06}>
-        <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl text-balance">
+      <Reveal delay={0.04} y={18}>
+        <h2 className="mt-5 text-3xl leading-[1.1] font-semibold tracking-[-0.045em] text-[var(--landing-text)] text-balance sm:text-4xl lg:text-[3.25rem]">
           {title}
         </h2>
       </Reveal>
       {body && (
-        <Reveal delay={0.12}>
-          <p className="mt-4 text-base leading-relaxed text-[#C8CFE6] text-pretty sm:text-lg">
+        <Reveal delay={0.08} y={18}>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--landing-muted)] sm:text-lg">
             {body}
           </p>
         </Reveal>

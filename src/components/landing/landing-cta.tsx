@@ -1,4 +1,4 @@
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, LockKeyhole } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "./motion";
@@ -7,99 +7,84 @@ const STACK = [
   "Next.js 16",
   "React 19",
   "TypeScript",
-  "PostgreSQL 17",
-  "Prisma 7",
-  "Tailwind v4",
-  "jose · bcrypt",
-  "ExcelJS",
-  "Nodemailer",
-  "Twilio",
+  "PostgreSQL",
+  "Prisma",
+  "Tailwind CSS",
 ];
 
 export function LandingCta() {
   return (
     <>
-      <section className="py-16 sm:py-24">
-        <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
+      <section className="pb-24 sm:pb-32">
+        <div className="mx-auto w-full max-w-[1180px] px-5 sm:px-8 lg:px-6">
           <Reveal>
-            <div className="relative overflow-hidden rounded-[32px] sm:rounded-[44px] border border-[#5C68A6]/30 bg-gradient-to-r from-[#0E132D] via-[#151C42] to-[#0E132D] px-6 py-16 text-center sm:px-12 sm:py-20 shadow-[0_25px_80px_rgba(0,0,0,0.7)]">
-              {/* Radial glow background */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 size-[650px] rounded-full bg-[#3B52E6]/25 blur-[140px]"
-              />
+            <div className="relative overflow-hidden rounded-[24px] bg-[#242157] px-6 py-12 text-white sm:px-10 sm:py-14 lg:px-14 lg:py-16">
+              <div className="absolute top-0 right-0 h-1.5 w-40 bg-[#d73b43]" aria-hidden="true" />
+              <div className="absolute -right-24 -bottom-36 size-72 rounded-full border-[48px] border-white/[0.05]" aria-hidden="true" />
 
-              <div className="relative z-10 mx-auto max-w-2xl">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#7B88D6]/40 bg-[#161D42]/90 px-4 py-1.5 text-xs font-semibold text-[#C8D1F8] backdrop-blur-md">
-                  <Lock className="size-3.5" />
-                  Role-Aware JWT Authentication
-                </span>
+              <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
+                <div>
+                  <p className="flex items-center gap-2.5 text-xs font-semibold tracking-[0.13em] text-[#ffbdc0] uppercase">
+                    <LockKeyhole className="size-4" aria-hidden="true" />
+                    Department-issued access
+                  </p>
+                  <h2 className="mt-5 max-w-2xl text-3xl leading-[1.08] font-semibold tracking-[-0.045em] sm:text-4xl lg:text-[3.25rem]">
+                    Your role is ready when you sign in.
+                  </h2>
+                  <p className="mt-5 max-w-2xl text-sm leading-7 text-[#cac9df] sm:text-base">
+                    Use the account issued by the department. Campus Here resolves
+                    your access securely and opens the correct workspace without a
+                    role selector.
+                  </p>
+                </div>
 
-                <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl text-balance">
-                  Ready when your cycle is
-                </h2>
-                <p className="mx-auto mt-4 text-base leading-relaxed text-[#C8CFE6] text-pretty sm:text-lg">
-                  Sign in with the account issued by your department. You will land
-                  on the dashboard for your role — coordinator, faculty or student.
-                </p>
                 <Link
                   href="/login"
-                  className="group relative mt-9 inline-flex h-13 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#3B52E6] via-[#4B63F6] to-[#6074F8] px-9 text-[15px] font-bold text-white transition-all shadow-[0_0_28px_rgba(75,99,246,0.45)] hover:shadow-[0_0_38px_rgba(75,99,246,0.75)] hover:scale-[1.02] active:scale-[0.98]"
+                  className="group inline-flex h-13 w-fit items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-[#242157] transition-colors hover:bg-[#f2f1f8]"
                 >
-                  <span>Sign in</span>
-                  <ArrowRight
-                    className="size-4 transition-transform group-hover:translate-x-1"
-                    aria-hidden
-                  />
+                  Continue to sign in
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                 </Link>
-                <p className="mt-6 text-xs text-[#A8B2E6]">
-                  Trouble signing in? Use “Forgot your password?” on the sign-in
-                  screen — reset links expire in 30 minutes.
-                </p>
               </div>
             </div>
           </Reveal>
 
-          <Reveal delay={0.1}>
-            <div className="mt-16 text-center">
-              <p className="font-mono text-[11px] font-semibold tracking-widest text-[#A8B2E6] uppercase">
-                Built with
-              </p>
-              <ul className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-                {STACK.map((tech) => (
-                  <li
-                    key={tech}
-                    className="rounded-full border border-[#5C68A6]/25 bg-[#121838] px-4 py-1.5 font-mono text-xs font-medium text-[#C8CFE6] shadow-sm hover:border-[#7B88D6]/50 hover:text-white transition-colors"
-                  >
-                    {tech}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
+          <div className="mt-10 flex flex-col justify-between gap-5 border-b border-[var(--landing-line)] pb-10 sm:flex-row sm:items-center">
+            <p className="text-xs font-semibold tracking-[0.12em] text-[var(--landing-faint)] uppercase">
+              Built on a production-ready stack
+            </p>
+            <ul className="flex flex-wrap gap-x-5 gap-y-2">
+              {STACK.map((technology) => (
+                <li key={technology} className="mono text-[0.68rem] text-[var(--landing-muted)]">
+                  {technology}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-white/10 py-10 bg-[#080B1A]">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-5 text-center sm:flex-row sm:px-8 sm:text-left">
-          <div className="flex items-center gap-3">
+      <footer className="border-t border-[var(--landing-line)] bg-[var(--landing-surface)] py-8">
+        <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+          <div className="flex items-center gap-4">
             <Image
               src="/assets/bmsit-logo.png"
-              alt="BMSIT Logo"
-              width={36}
-              height={36}
-              className="object-contain"
+              alt=""
+              width={44}
+              height={44}
+              className="size-11 object-contain"
             />
-            <div>
-              <p className="text-sm font-bold text-white">Campus Here</p>
-              <p className="text-xs text-[#A8B2E6] font-mono">
-                Dept. of CSE · Project Tracking &amp; Allocation
+            <div className="border-l border-[var(--landing-line)] pl-4">
+              <p className="text-sm font-semibold text-[var(--landing-text)]">Campus Here</p>
+              <p className="mt-1 text-xs text-[var(--landing-muted)]">
+                Department of Computer Science &amp; Engineering
               </p>
             </div>
           </div>
-          <p className="text-xs text-[#A8B2E6] font-mono">
-            BMS Institute of Technology and Management · Yelahanka, Bengaluru
-          </p>
+          <div className="text-xs leading-5 text-[var(--landing-muted)] lg:text-right">
+            <p>BMS Institute of Technology and Management</p>
+            <p>Yelahanka, Bengaluru — 560119</p>
+          </div>
         </div>
       </footer>
     </>

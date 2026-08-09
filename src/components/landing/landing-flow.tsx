@@ -1,115 +1,102 @@
-"use client";
-
-import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
-import { useRef } from "react";
+import {
+  ClipboardCheck,
+  Network,
+  ScanSearch,
+  Upload,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { Reveal } from "./motion";
 import { SectionHeading } from "./section-heading";
 
-const STEPS = [
+const STEPS: Array<{
+  step: string;
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  output: string;
+}> = [
   {
     step: "01",
-    title: "The coordinator imports the cohort",
-    body: "Students and faculty arrive as CSV. Validation catches wrong CGPA, duplicate USNs and missing emails before a single row is written, and a student who already exists is enrolled into the cycle rather than rejected.",
-    ring: "border-sky-500 bg-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.8)]",
-    badge: "CSV Import & Validation",
+    icon: Upload,
+    title: "Import the cohort",
+    body: "Student and faculty CSVs are checked for malformed values, duplicates and missing identities before any row is written.",
+    output: "Verified roster",
   },
   {
     step: "02",
-    title: "Students form groups of four",
-    body: "A leader invites; accepting one invite declines the rest inside the same transaction. Average CGPA is computed by the database, and the group locks on submit — membership, title and preferences all become immutable.",
-    ring: "border-purple-500 bg-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.8)]",
-    badge: "Serializable Tx",
+    icon: Users,
+    title: "Form and lock groups",
+    body: "Students accept invitations into groups of four. Submitting locks membership, title and guide preferences together.",
+    output: "Eligible groups",
   },
   {
     step: "03",
-    title: "A title clears the originality gate",
-    body: "The live score while typing is advisory; the write path re-runs the whole check. Same words in any order reduce to the same token set and score 1.00 — blocked, with the five closest matches explained.",
-    ring: "border-emerald-500 bg-emerald-400 shadow-[0_0_12px_rgba(34,197,94,0.8)]",
-    badge: "TF-IDF Originality Engine",
+    icon: ScanSearch,
+    title: "Clear originality",
+    body: "The server checks every submitted title against the corpus and blocks scores at or above the duplication threshold.",
+    output: "Approved proposals",
   },
   {
     step: "04",
-    title: "The engine matches guides",
-    body: "Groups propose down six ranked preferences. Guides hold the best proposals up to capacity, ranking by domain match, then CGPA, then submission time, then group code — so the same input always yields the same matching.",
-    ring: "border-blue-500 bg-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.8)]",
-    badge: "Gale-Shapley Matching",
+    icon: Network,
+    title: "Allocate guides",
+    body: "Groups propose down ranked preferences while guide capacity and deterministic tie-break rules shape the stable result.",
+    output: "Stable allocation",
   },
   {
     step: "05",
-    title: "Reviews run and reports come out",
-    body: "R0, P1 and P2 are scheduled against the calendar with conflicts flagged, reminders queue at 15 and 7 days, attendance and marks are recorded per session, and nine reports export as formatted workbooks.",
-    ring: "border-amber-500 bg-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.8)]",
-    badge: "Evaluation & Reports",
+    icon: ClipboardCheck,
+    title: "Run reviews and report",
+    body: "The department schedules reviews, records attendance and marks, sends reminders and exports the final audit trail.",
+    output: "Completed cycle",
   },
 ];
 
 export function LandingFlow() {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduced = useReducedMotion();
-
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 65%", "end 55%"],
-  });
-  const scaleY = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 30,
-    restDelta: 0.001,
-  });
-
   return (
-    <section id="flow" className="scroll-mt-24 py-20 sm:py-28">
-      <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
-        <SectionHeading
-          eyebrow="End to end"
-          title="How a cycle moves"
-          body="Five stages from an empty database to a signed-off review — each one gated so the next can trust what came before."
-        />
-
-        <div ref={ref} className="relative mx-auto mt-16 max-w-3xl">
-          {/* Animated Glowing Rail */}
-          <div
-            aria-hidden
-            className="absolute top-3 bottom-3 left-[19px] w-0.5 bg-white/10 sm:left-[23px]"
-          >
-            {!reduced && (
-              <motion.div
-                style={{ scaleY }}
-                className="absolute inset-0 origin-top bg-gradient-to-b from-sky-400 via-blue-500 to-emerald-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]"
-              />
-            )}
+    <section id="flow" className="scroll-mt-24 border-y border-[var(--landing-line)] bg-[var(--landing-surface)] py-24 sm:py-32">
+      <div className="mx-auto grid w-full max-w-[1180px] gap-14 px-5 sm:px-8 lg:grid-cols-[0.82fr_1.18fr] lg:gap-20 lg:px-6">
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <SectionHeading
+            eyebrow="Operating sequence"
+            title="A cycle that moves forward on verified state."
+            body="Five handoffs. Each stage produces a dependable input for the next, so coordinators know exactly where work is held up."
+          />
+          <div className="mt-9 border-l-2 border-[#b9272f] pl-5">
+            <p className="text-xs font-semibold tracking-[0.12em] text-[var(--landing-faint)] uppercase">
+              Built-in principle
+            </p>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-[var(--landing-muted)]">
+              Preview first, commit second. The browser never authorizes a write
+              the server has not independently checked.
+            </p>
           </div>
+        </div>
 
-          <ol className="space-y-8 sm:space-y-10">
-            {STEPS.map((item) => (
-              <li key={item.step}>
-                <Reveal y={24} className="flex gap-5 sm:gap-7">
-                  <span className="relative z-10 shrink-0">
-                    <span className="flex size-10 items-center justify-center rounded-full border border-white/20 bg-[#0E1322] shadow-[0_0_15px_rgba(0,0,0,0.5)] sm:size-12">
-                      <span className={`size-3 rounded-full ${item.ring}`} />
-                    </span>
-                  </span>
-                  <div className="group min-w-0 flex-1 rounded-3xl border border-white/10 bg-[#0E1322]/80 p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/25 hover:bg-[#12182B]">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-mono text-xs font-semibold tracking-widest text-sky-400">
-                        STEP {item.step}
-                      </span>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-[11px] font-medium text-slate-300">
-                        {item.badge}
-                      </span>
-                    </div>
-                    <h3 className="mt-2 text-lg font-bold tracking-tight text-white group-hover:text-sky-300 transition-colors">
+        <ol className="border-t border-[var(--landing-line)]">
+          {STEPS.map((item) => (
+            <li key={item.step} className="border-b border-[var(--landing-line)]">
+              <Reveal y={18} className="grid gap-5 py-8 sm:grid-cols-[52px_1fr_auto] sm:items-start sm:gap-6">
+                <span className="mono text-sm font-semibold text-[#b9272f]">{item.step}</span>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <item.icon className="size-[18px] text-[var(--landing-navy)]" aria-hidden="true" />
+                    <h3 className="text-lg font-semibold tracking-[-0.025em] text-[var(--landing-text)]">
                       {item.title}
                     </h3>
-                    <p className="mt-2.5 text-sm leading-relaxed text-slate-300">
-                      {item.body}
-                    </p>
                   </div>
-                </Reveal>
-              </li>
-            ))}
-          </ol>
-        </div>
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-[var(--landing-muted)]">
+                    {item.body}
+                  </p>
+                </div>
+                <span className="w-fit rounded-lg border border-[var(--landing-line)] bg-[var(--landing-panel-raised)] px-3 py-1.5 text-[0.62rem] font-semibold tracking-[0.08em] text-[var(--landing-muted)] uppercase sm:mt-0.5">
+                  {item.output}
+                </span>
+              </Reveal>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

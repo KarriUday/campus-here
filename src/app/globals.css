@@ -78,6 +78,56 @@
   color-scheme: light;
 }
 
+/*
+ * The public site owns a deliberately quieter product palette than the app.
+ * These variables keep light/dark rendering local to the landing route, so a
+ * visitor's marketing-site preference never changes an authenticated screen.
+ */
+.landing-theme {
+  --landing-bg: #f5f6f8;
+  --landing-surface: #ffffff;
+  --landing-surface-2: #f0f1f5;
+  --landing-soft: #eceef3;
+  --landing-line: #dde0e7;
+  --landing-line-strong: #c8ccd6;
+  --landing-text: #181925;
+  --landing-muted: #666875;
+  --landing-faint: #8b8d98;
+  --landing-navy: #28265f;
+  --landing-navy-soft: #e9e9f3;
+  --landing-panel: #ffffff;
+  --landing-panel-raised: #f7f8fa;
+  --landing-shadow: 0 28px 70px -42px rgba(25, 26, 46, 0.38);
+  color-scheme: light;
+  background: var(--landing-bg);
+  color: var(--landing-text);
+}
+
+.landing-theme[data-theme="dark"] {
+  --landing-bg: #101116;
+  --landing-surface: #17181f;
+  --landing-surface-2: #1b1d25;
+  --landing-soft: #22242d;
+  --landing-line: #2b2e38;
+  --landing-line-strong: #3c3f4b;
+  --landing-text: #f1f2f6;
+  --landing-muted: #a3a5b0;
+  --landing-faint: #7f818d;
+  --landing-navy: #7775bf;
+  --landing-navy-soft: #24243a;
+  --landing-panel: #17181f;
+  --landing-panel-raised: #1d1f27;
+  --landing-shadow: 0 30px 80px -44px rgba(0, 0, 0, 0.85);
+  color-scheme: dark;
+}
+
+.landing-grid {
+  background-image:
+    linear-gradient(var(--landing-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--landing-line) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
