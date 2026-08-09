@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Ban, Check, TriangleAlert } from "lucide-react";
+import { Ban, Check, TriangleAlert, Cpu, Network } from "lucide-react";
 import { Reveal } from "./motion";
 import { SectionHeading } from "./section-heading";
 
@@ -16,9 +16,9 @@ const MATCHES = [
 ] as const;
 
 const BAND_STYLE = {
-  blocked: { bar: "bg-error", chip: "bg-error-soft text-error-ink", label: "Blocked" },
-  warning: { bar: "bg-warning", chip: "bg-warning-soft text-warning-ink", label: "Warning" },
-  allowed: { bar: "bg-success", chip: "bg-success-soft text-success-ink", label: "Allowed" },
+  blocked: { bar: "bg-red-500", chip: "border-red-500/30 bg-red-500/10 text-red-400", label: "Blocked" },
+  warning: { bar: "bg-amber-500", chip: "border-amber-500/30 bg-amber-500/10 text-amber-400", label: "Warning" },
+  allowed: { bar: "bg-emerald-500", chip: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400", label: "Allowed" },
 } as const;
 
 /** How a guide ranks competing proposals, in order. */
@@ -34,7 +34,7 @@ function ScoreBar({ score, delay }: { score: number; delay: number }) {
   const pct = `${Math.round(score * 100)}%`;
 
   return (
-    <div className="bg-surface h-1.5 w-full overflow-hidden rounded-full">
+    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-900 border border-white/5">
       <motion.div
         className={`h-full rounded-full ${BAND_STYLE[score >= 0.95 ? "blocked" : score >= 0.8 ? "warning" : "allowed"].bar}`}
         initial={reduced ? { width: pct } : { width: 0 }}
@@ -48,27 +48,34 @@ function ScoreBar({ score, delay }: { score: number; delay: number }) {
 
 export function LandingEngine() {
   return (
-    <section id="engine" className="scroll-mt-24 py-24 sm:py-32">
-      {/* Tinted band so the two deep-dives read as a distinct chapter. */}
-      <div className="border-border-subtle bg-surface/60 border-y py-20 sm:py-24">
-        <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
+    <section id="engine" className="scroll-mt-24 py-20 sm:py-28">
+      <div className="relative rounded-[32px] sm:rounded-[44px] border border-white/10 bg-[#0A0E1A] p-6 sm:p-12 shadow-[0_20px_70px_rgba(0,0,0,0.5)] overflow-hidden">
+        {/* Background Radial Lights */}
+        <div className="pointer-events-none absolute -top-32 -left-32 size-96 rounded-full bg-sky-500/10 blur-[130px]" />
+        <div className="pointer-events-none absolute -bottom-32 -right-32 size-96 rounded-full bg-purple-500/10 blur-[130px]" />
+
+        <div className="relative z-10 mx-auto w-full max-w-6xl">
           <SectionHeading
             eyebrow="Under the hood"
             title="Two engines doing the hard part"
             body="Both are pure functions with no database import, so they unit-test without a connection — and a dry run provably executes the same code as the committed run."
           />
 
-          <div className="mt-14 grid gap-5 lg:grid-cols-2">
-            {/* Originality */}
+          <div className="mt-14 grid gap-6 lg:grid-cols-2">
+            {/* Originality Card */}
             <Reveal className="h-full">
-              <div className="border-border-subtle bg-surface-raised shadow-card h-full rounded-3xl border p-7">
-                <span className="text-primary bg-primary-soft inline-flex rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.14em] uppercase">
-                  Originality
-                </span>
-                <h3 className="text-ink mt-4 text-xl font-semibold tracking-tight">
+              <div className="group h-full rounded-3xl border border-white/10 bg-[#101526]/80 p-7 backdrop-blur-xl transition-all duration-300 hover:border-sky-500/30 hover:bg-[#141B30]">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 font-mono text-[11px] font-semibold text-sky-400 uppercase tracking-wider">
+                    <Cpu className="size-3.5" />
+                    Originality
+                  </span>
+                  <span className="font-mono text-xs text-slate-400">TF-IDF + Cosine</span>
+                </div>
+                <h3 className="mt-4 text-xl font-bold tracking-tight text-white group-hover:text-sky-300 transition-colors">
                   TF-IDF, corrected by four lexical signals
                 </h3>
-                <p className="text-ink-secondary mt-3 text-sm leading-relaxed">
+                <p className="mt-3 text-sm leading-relaxed text-slate-300">
                   Cosine alone under-reads a near-duplicate whose shared words are
                   common across the corpus. Edit distance alone over-reads two
                   unrelated titles of similar shape. The score weights cosine at
@@ -76,11 +83,11 @@ export function LandingEngine() {
                   Levenshtein at 0.35.
                 </p>
 
-                <div className="border-border-subtle mt-6 rounded-2xl border p-4">
-                  <p className="text-ink-tertiary text-[11px] font-semibold tracking-[0.14em] uppercase">
+                <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0F1D] p-4 sm:p-5">
+                  <p className="font-mono text-[11px] font-semibold tracking-widest text-slate-400 uppercase">
                     Checking
                   </p>
-                  <p className="text-ink mt-1 text-sm font-medium">
+                  <p className="mt-1 font-mono text-sm font-medium text-sky-200">
                     “Smart Attendance via Face Recognition”
                   </p>
 
@@ -90,17 +97,17 @@ export function LandingEngine() {
                       return (
                         <li key={match.title}>
                           <div className="flex items-baseline justify-between gap-3">
-                            <span className="text-ink-secondary min-w-0 truncate text-xs">
+                            <span className="min-w-0 truncate text-xs text-slate-300">
                               {match.title}
                             </span>
-                            <span className="mono text-ink shrink-0 text-xs font-semibold">
+                            <span className="font-mono text-xs font-bold text-white shrink-0">
                               {match.score.toFixed(2)}
                             </span>
                           </div>
                           <div className="mt-1.5 flex items-center gap-3">
                             <ScoreBar score={match.score} delay={0.15 + i * 0.15} />
                             <span
-                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${style.chip}`}
+                              className={`shrink-0 rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-semibold ${style.chip}`}
                             >
                               {style.label}
                             </span>
@@ -110,9 +117,9 @@ export function LandingEngine() {
                     })}
                   </ul>
 
-                  <p className="text-ink-tertiary mt-5 text-xs leading-relaxed">
+                  <p className="mt-5 text-xs text-slate-400 leading-relaxed border-t border-white/10 pt-3">
                     Both titles reduce to{" "}
-                    <code className="bg-surface text-ink rounded px-1 py-0.5 text-[11px]">
+                    <code className="rounded border border-sky-500/20 bg-sky-500/10 px-1.5 py-0.5 font-mono text-[11px] text-sky-300">
                       attendance face recognition
                     </code>
                     . When two titles share a token set exactly, the score is forced
@@ -120,38 +127,42 @@ export function LandingEngine() {
                   </p>
                 </div>
 
-                <div className="text-ink-tertiary mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[11px]">
+                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-mono text-slate-400">
                   <span className="flex items-center gap-1.5">
-                    <Ban className="text-error size-3" aria-hidden /> ≥ 0.95 blocked
+                    <Ban className="size-3.5 text-red-400" aria-hidden /> ≥ 0.95 blocked
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <TriangleAlert className="text-warning size-3" aria-hidden /> 0.80–0.94 warning
+                    <TriangleAlert className="size-3.5 text-amber-400" aria-hidden /> 0.80–0.94 warning
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Check className="text-success size-3" aria-hidden /> below 0.80 allowed
+                    <Check className="size-3.5 text-emerald-400" aria-hidden /> below 0.80 allowed
                   </span>
                 </div>
               </div>
             </Reveal>
 
-            {/* Allocation */}
+            {/* Allocation Card */}
             <Reveal delay={0.1} className="h-full">
-              <div className="border-border-subtle bg-surface-raised shadow-card h-full rounded-3xl border p-7">
-                <span className="text-sky bg-sky/10 inline-flex rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.14em] uppercase">
-                  Allocation
-                </span>
-                <h3 className="text-ink mt-4 text-xl font-semibold tracking-tight">
+              <div className="group h-full rounded-3xl border border-white/10 bg-[#101526]/80 p-7 backdrop-blur-xl transition-all duration-300 hover:border-purple-500/30 hover:bg-[#141B30]">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 font-mono text-[11px] font-semibold text-purple-400 uppercase tracking-wider">
+                    <Network className="size-3.5" />
+                    Allocation
+                  </span>
+                  <span className="font-mono text-xs text-slate-400">Gale-Shapley Algorithm</span>
+                </div>
+                <h3 className="mt-4 text-xl font-bold tracking-tight text-white group-hover:text-purple-300 transition-colors">
                   Gale-Shapley, made reproducible
                 </h3>
-                <p className="text-ink-secondary mt-3 text-sm leading-relaxed">
+                <p className="mt-3 text-sm leading-relaxed text-slate-300">
                   Groups propose down their six ranked preferences; each guide holds
                   the best proposals up to capacity and releases the rest. Manual
                   assignments never get recomputed — they consume capacity before
                   matching begins and leave the market.
                 </p>
 
-                <div className="border-border-subtle mt-6 rounded-2xl border p-4">
-                  <p className="text-ink-tertiary text-[11px] font-semibold tracking-[0.14em] uppercase">
+                <div className="mt-6 rounded-2xl border border-white/10 bg-[#0B0F1D] p-4 sm:p-5">
+                  <p className="font-mono text-[11px] font-semibold tracking-widest text-slate-400 uppercase">
                     A guide ranks proposals by
                   </p>
                   <ol className="mt-4 space-y-3">
@@ -162,19 +173,19 @@ export function LandingEngine() {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={VIEWPORT}
                         transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
-                        className="flex items-center gap-3"
+                        className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#121728] p-2.5"
                       >
-                        <span className="mono bg-sky/10 text-sky flex size-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-semibold">
+                        <span className="font-mono flex size-7 shrink-0 items-center justify-center rounded-lg border border-purple-500/30 bg-purple-500/10 text-xs font-bold text-purple-300">
                           {i + 1}
                         </span>
-                        <span className="text-ink-secondary text-sm">{rule}</span>
+                        <span className="text-xs sm:text-sm font-medium text-slate-200">{rule}</span>
                       </motion.li>
                     ))}
                   </ol>
                 </div>
 
-                <p className="text-ink-tertiary mt-5 text-xs leading-relaxed">
-                  <span className="text-ink font-semibold">Stability is checked, not assumed.</span>{" "}
+                <p className="mt-5 text-xs text-slate-400 leading-relaxed">
+                  <span className="font-semibold text-white">Stability is checked, not assumed.</span>{" "}
                   A blocking-pair search runs against the result, and a run that
                   fails its own check is refused rather than written. Committing
                   happens inside a serializable transaction.

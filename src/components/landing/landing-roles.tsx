@@ -8,9 +8,9 @@ type Role = {
   name: string;
   tagline: string;
   duties: string[];
-  /** Gradient for the card's top edge — the role's identity colour. */
   edge: string;
   chip: string;
+  badge: string;
 };
 
 const ROLES: Role[] = [
@@ -24,8 +24,9 @@ const ROLES: Role[] = [
       "Schedule reviews against the academic calendar",
       "Export all nine reports for the whole cycle",
     ],
-    edge: "bg-lilac",
-    chip: "bg-sky/10 text-sky",
+    edge: "from-purple-500 to-indigo-500",
+    chip: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    badge: "Admin Access",
   },
   {
     icon: LayoutDashboard,
@@ -37,8 +38,9 @@ const ROLES: Role[] = [
       "Mark attendance and record marks per session",
       "Mail their own students — never the whole cohort",
     ],
-    edge: "bg-coral",
-    chip: "bg-primary/10 text-primary",
+    edge: "from-sky-500 to-blue-600",
+    chip: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+    badge: "Faculty Guide Access",
   },
   {
     icon: GraduationCap,
@@ -50,14 +52,15 @@ const ROLES: Role[] = [
       "Rank six guides, no duplicates across ranks",
       "Track reviews and notifications in a live inbox",
     ],
-    edge: "bg-lime",
-    chip: "bg-sky/10 text-sky",
+    edge: "from-emerald-500 to-teal-500",
+    chip: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    badge: "Student Roster Access",
   },
 ];
 
 export function LandingRoles() {
   return (
-    <section id="roles" className="scroll-mt-24 py-24 sm:py-32">
+    <section id="roles" className="scroll-mt-24 py-20 sm:py-28">
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
         <SectionHeading
           eyebrow="Role-aware"
@@ -65,36 +68,45 @@ export function LandingRoles() {
           body="Scope is derived from the session, never from the query string. A faculty caller asking for cycle-wide data is narrowed, not obliged."
         />
 
-        <Stagger className="mt-14 grid gap-5 lg:grid-cols-3">
+        <Stagger className="mt-14 grid gap-6 lg:grid-cols-3">
           {ROLES.map((role) => (
             <StaggerItem key={role.name} className="h-full">
-              <article className="group border-border-subtle bg-surface-raised hover:shadow-raised relative h-full overflow-hidden rounded-3xl border p-7 transition-all duration-300 hover:-translate-y-1">
+              <article className="group relative h-full overflow-hidden rounded-3xl border border-white/10 bg-[#0E1322]/80 p-7 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/25 hover:bg-[#12182B]">
+                {/* Glowing top line edge */}
                 <span
                   aria-hidden
-                  className={`absolute inset-x-0 top-0 h-1 ${role.edge}`}
+                  className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${role.edge}`}
                 />
-                <span
-                  className={`inline-flex size-11 items-center justify-center rounded-xl ${role.chip}`}
-                >
-                  <role.icon className="size-5" aria-hidden />
-                </span>
-                <h3 className="text-ink mt-5 text-lg font-semibold tracking-tight">
+                
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`inline-flex size-12 items-center justify-center rounded-2xl border ${role.chip} shadow-inner`}
+                  >
+                    <role.icon className="size-6" aria-hidden />
+                  </span>
+                  <span className="font-mono text-[11px] font-medium text-slate-400 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5">
+                    {role.badge}
+                  </span>
+                </div>
+
+                <h3 className="mt-5 text-xl font-bold tracking-tight text-white group-hover:text-sky-300 transition-colors">
                   {role.name}
                 </h3>
-                <p className="text-ink-tertiary mt-0.5 text-xs font-medium">
+                <p className="mt-0.5 text-xs font-mono text-slate-400 uppercase tracking-wider">
                   {role.tagline}
                 </p>
-                <ul className="mt-5 space-y-2.5">
+
+                <ul className="mt-6 space-y-3">
                   {role.duties.map((duty) => (
                     <li
                       key={duty}
-                      className="text-ink-secondary flex gap-2.5 text-sm leading-relaxed"
+                      className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed"
                     >
                       <span
                         aria-hidden
-                        className={`mt-[0.45rem] size-1.5 shrink-0 rounded-full ${role.edge}`}
+                        className={`mt-1.5 size-2 shrink-0 rounded-full bg-gradient-to-r ${role.edge}`}
                       />
-                      {duty}
+                      <span>{duty}</span>
                     </li>
                   ))}
                 </ul>
