@@ -159,6 +159,29 @@ enum FileKind {
 }
 
 // ---------------------------------------------------------------------------
+// OTP Verification
+// ---------------------------------------------------------------------------
+
+/// Short-lived one-time passcodes for email-verified signup and OTP login.
+/// Only the SHA-256 hash of the 6-digit code is stored — never the plaintext.
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String
+  purpose   OtpPurpose
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, purpose])
+}
+
+enum OtpPurpose {
+  SIGNUP
+  LOGIN
+}
+
+// ---------------------------------------------------------------------------
 // Identity
 // ---------------------------------------------------------------------------
 
@@ -218,6 +241,7 @@ model Student {
   receivedInvites GroupInvite[]  @relation("InviteTo")
   attendance      Attendance[]
   notifications   Notification[]
+  scores          StudentScore[]
 
   @@index([cgpa])
   @@index([fullName])
@@ -453,6 +477,17 @@ model ProjectTitle {
   similarityScore  Decimal? @db.Decimal(5, 4)
   similarityReport Json?
 
+  /// Senior archive metadata (for past corpus projects)
+  seniorAuthors       Json?     // [{ name: "Ananya S", usn: "1BY21CS045", batch: "2024-25" }]
+  githubUrl           String?   // Source code repository link
+  driveUrl            String?   // Google Drive archive containing PPTs, Synopsis, Reports
+  projectAbstract     String?   // Technical summary of past system
+
+  /// Innovation extension track (for current groups building Phase 2.0 on top of past work)
+  isExtension         Boolean   @default(false)
+  proposedInnovations String?   // Novel features / architectural delta proposed
+  seniorReferenceId   String?   // ID of senior project being extended
+
   reviewedById    String?
   reviewedAt      DateTime?
   rejectionReason String?
@@ -602,16 +637,45 @@ model Evaluation {
   score     Decimal @db.Decimal(4, 2)
   remarks   String?
 
+  /// Structured breakdown of points per criterion ({ "problemDefinition": 2.5, ... })
+  rubricScores Json?
+  /// Review outcome decision
+  verdict      ReviewVerdict @default(APPROVED)
+  /// Corrective action items / tasks for the group
+  actionItems  String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  session ReviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  group   Group         @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  faculty Faculty       @relation(fields: [facultyId], references: [id])
+  session       ReviewSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  group         Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  faculty       Faculty        @relation(fields: [facultyId], references: [id])
+  studentScores StudentScore[]
 
   @@unique([sessionId, groupId])
   @@index([groupId])
   @@index([facultyId])
+}
+
+enum ReviewVerdict {
+  APPROVED
+  NEEDS_REVISION
+  EXCELLENT
+  REJECTED
+}
+
+model StudentScore {
+  id           String     @id @default(cuid())
+  evaluationId String
+  studentId    String
+  score        Decimal    @db.Decimal(4, 2)
+  remarks      String?
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([evaluationId, studentId])
+  @@index([studentId])
 }
 
 // ---------------------------------------------------------------------------

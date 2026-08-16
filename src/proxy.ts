@@ -22,16 +22,18 @@ const ROLE_PREFIXES: Array<{ prefix: string; role: Role }> = [
 const PUBLIC_PATHS = new Set([
   "/",
   "/login",
+  "/signup",
   "/forgot-password",
   "/reset-password",
 ]);
 
 /** API prefixes that authenticate themselves (or are machine-to-machine). */
 const PUBLIC_API_PREFIXES = [
-  "/api/auth/login",
+  "/api/auth/login",            // password login + OTP login sub-routes
   "/api/auth/logout",
   "/api/auth/forgot-password",
   "/api/auth/reset-password",
+  "/api/auth/signup",           // OTP-based student self-registration
   "/api/health",
   "/api/cron",
 ];

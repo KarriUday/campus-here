@@ -1,0 +1,384 @@
+# 🎯 Campus Here — Interview Preparation Guide
+
+---
+
+## HOW TO INTRODUCE THE PROJECT (2-Minute Pitch)
+
+> **Memorize this. Say it naturally.**
+
+---
+
+*"I built Campus Here — a full-stack web platform for managing academic project cycles at my college, BMSIT's CSE department. The system handles everything from importing student rosters to the final project review — completely end to end.*
+
+*The key thing that makes it different from a regular CRUD app is that every single screen — all 30+ pages — is connected to real API routes and a real PostgreSQL database. Nothing shows dummy data. Even the originality check for project titles runs a proper TF-IDF algorithm on the server, and the guide allocation uses Gale-Shapley stable matching.*
+
+*I built it with Next.js 16, React 19, TypeScript, PostgreSQL 17, and Prisma ORM. There are three roles — Admin, Student, and Faculty — each with their own workspace, secured with JWT authentication and role-based access control.*
+
+*On the testing side, I wrote 121 unit tests, 134 API integration tests, and 23 browser-level end-to-end tests. The system currently has 300 students, 40 faculty, and 71 project groups running on a live PostgreSQL database."*
+
+---
+
+## STRUCTURED EXPLANATION (If they ask "Tell me about your project")
+
+Use this **4-part structure**:
+
+1. **Problem** → "Managing 300+ students' project allocations manually is error-prone and chaotic."
+2. **What I built** → "A role-based platform automating the entire lifecycle."
+3. **How it works technically** → "Next.js full-stack, PostgreSQL, Gale-Shapley algorithm, TF-IDF similarity engine."
+4. **Impact / Outcome** → "78% of groups got their first-choice guide. 121 unit tests passing. Zero database invariant violations."
+
+---
+
+---
+
+# 💬 EXPECTED INTERVIEW QUESTIONS & ANSWERS
+
+---
+
+## 🔷 SECTION 1: PROJECT OVERVIEW QUESTIONS
+
+---
+
+### Q1. What does your project do? Who are the users?
+
+**Answer:**
+> "Campus Here manages the full lifecycle of academic project cycles at BMSIT CSE. There are three types of users:
+> - **Admin (Coordinator):** Imports student/faculty data via CSV, runs the guide allocation engine, schedules reviews, generates Excel reports.
+> - **Students:** Form groups of exactly 4, submit project titles with originality checks, rank 6 guide preferences, and get allocated to a guide.
+> - **Faculty Guides:** See their assigned groups, mark attendance, evaluate projects, and approve project titles.
+>
+> The whole flow goes: Roster Import → Group Formation → Title Originality Check → Guide Allocation → Review Scheduling → Reports."
+
+---
+
+### Q2. What problem does this solve that wasn't solved before?
+
+**Answer:**
+> "The manual process had several problems — duplicate project titles going undetected, guide allocation being subjective and unstable (not mathematically provable), and no audit trail. Campus Here solves this by:
+> - Using TF-IDF cosine similarity to flag duplicate or near-duplicate project titles automatically.
+> - Using Gale-Shapley algorithm for mathematically stable guide allocation — provably no group-guide pair would prefer each other over their current assignment.
+> - Enforcing business rules at the database level (not just UI) to prevent data corruption."
+
+---
+
+### Q3. What was the most challenging part of building this?
+
+**Answer:**
+> "Two things were genuinely hard. First, the title originality engine — I had to combine TF-IDF cosine similarity with four lexical signals (Dice overlap, character 3-gram Jaccard, Levenshtein ratio, and containment) because TF-IDF alone under-reads duplicates when shared words are common across the corpus. Balancing those weights took iteration.
+>
+> Second, the concurrency problem in group formation. Two students could try to claim the last seat in a group simultaneously. I solved this using serializable transactions in PostgreSQL with a retry on `P2034` (Prisma's conflict error), and a database-level `@@unique([cycleId, studentId])` constraint as the final backstop."
+
+---
+
+---
+
+## 🔷 SECTION 2: TECHNICAL / ARCHITECTURE QUESTIONS
+
+---
+
+### Q4. Why did you choose Next.js over a separate React frontend + Node backend?
+
+**Answer:**
+> "Next.js 16 with App Router lets API routes live directly alongside the UI in one codebase. That means one Vercel deployment instead of two, no CORS configuration, and edge middleware that can gate routes before the page even loads. It also means Vercel Cron can invoke an API route directly for scheduled reminders — something you can't do with an in-process `node-cron` on serverless."
+
+---
+
+### Q5. Explain your authentication system.
+
+**Answer:**
+> "I use JWT tokens signed with HS256 using the `jose` library. The token is stored in an HTTP-only, `SameSite=Lax` cookie called `ch_session` that expires after 8 hours. HTTP-only means JavaScript can't read it — protects against XSS.
+>
+> Passwords are hashed with bcrypt at cost factor 12. For login, even when an email doesn't exist, I run a dummy bcrypt comparison to take the same time — this prevents timing attacks that reveal whether an email is registered.
+>
+> Security is two-layered: the proxy middleware (`src/proxy.ts`) intercepts browser navigation and redirects if the role doesn't match. But inside every API handler, `requireApi()` independently re-checks the JWT claims. So even if the proxy is misconfigured, the API stays protected."
+
+---
+
+### Q6. Explain your database schema design. Why 26 models?
+
+**Answer:**
+> "The schema is normalized to avoid data duplication and maintain auditability across multiple project cycles. Some key design decisions:
+> - **Student is a person, not a per-cycle row.** One human keeps one login even across Major, Mini, and Internship cycles. Cycle membership lives in a separate `StudentCycle` join table.
+> - **GroupMember carries a denormalized `cycleId`** so the database can enforce one active group per student per cycle using `@@unique([cycleId, studentId])` — instead of relying on application logic.
+> - **AllocationRun is a separate model** so every historical run is auditable — you can re-examine what the tie-break parameters were and what the result was months later.
+> - **Notification is one row per recipient** for delivery-state tracking per person, not just aggregate counts."
+
+---
+
+### Q7. What is a serializable transaction and where did you use it?
+
+**Answer:**
+> "A serializable transaction is the strictest isolation level in SQL — it makes concurrent transactions behave as if they ran one at a time. I used it in two places:
+> 1. **Accepting a group invite** — two students could accept the last available seat simultaneously. Serializable isolation means one will succeed and the other gets a clean conflict error, which I catch and retry.
+> 2. **Committing guide allocation** — the Gale-Shapley run writes all allocations atomically. If anything fails mid-write, the entire result is rolled back."
+
+---
+
+### Q8. How does your Gale-Shapley algorithm work?
+
+**Answer:**
+> "Gale-Shapley is a deferred acceptance algorithm for stable matching. Here's how it works in my system:
+>
+> Groups are proposers, guides are receivers. Every group has a ranked list of 6 guide preferences.
+>
+> The algorithm runs like this: each group proposes to its next preferred guide. The guide holds the best proposals up to their capacity and rejects the rest. Rejected groups propose to their next choice. This continues until everyone is either matched or has exhausted their list.
+>
+> What makes it stable is that `findBlockingPair()` verifies the result — meaning no group-guide pair exists where both would prefer each other over their current assignment.
+>
+> When guides rank competing groups, I use a 4-tier deterministic tie-break: domain match first, then higher average CGPA, then earlier submission timestamp, then group code alphabetically. This guarantees the same input always produces the same output.
+>
+> On our 55-group cohort: 78% got their first choice, 100% were allocated, with zero blocking pairs."
+
+---
+
+### Q9. Explain your TF-IDF similarity engine.
+
+**Answer:**
+> "TF-IDF stands for Term Frequency–Inverse Document Frequency. It converts text into vectors where rare words across the corpus get higher weights.
+>
+> My pipeline first normalizes the title: lowercase it, expand abbreviations (ML → machine learning, IoT → internet of things), expand synonyms, drop stopwords like 'smart', 'system', 'application', then strip plurals.
+>
+> The scoring formula is:
+> `score = 0.65 × TF-IDF_cosine + 0.35 × max(Dice, Containment, 3-gram_Jaccard, Levenshtein)`
+>
+> I blend TF-IDF with lexical signals because TF-IDF alone underweights duplicates where shared words are common in the corpus (low IDF = small vector contribution). The lexical signals catch those cases.
+>
+> If the two token sets are identical, I force the score to 1.00 regardless — same words in any order is the same project.
+>
+> Thresholds: ≥0.95 is blocked, 0.80–0.94 shows a warning, below 0.80 is clear."
+
+---
+
+### Q10. What is Prisma and why did you use it over raw SQL or another ORM?
+
+**Answer:**
+> "Prisma is a type-safe ORM for Node.js. I chose it because:
+> 1. The generated TypeScript client gives compile-time type safety — a typo in a query field is caught before runtime.
+> 2. Prisma 7 uses driver adapters (`@prisma/adapter-pg`) instead of a Rust binary engine, which works better on serverless environments like Vercel.
+> 3. Prisma Migrate manages database schema evolution cleanly, and I use `DIRECT_URL` for migrations (which need a non-pooled connection) while the app uses the pooled `DATABASE_URL` at runtime."
+
+---
+
+### Q11. How did you handle file storage? Why store files in PostgreSQL?
+
+**Answer:**
+> "Uploaded files — CSVs, calendar PDFs, orientation audio — are stored as `bytea` columns in PostgreSQL via the `UploadedFile` model. The reason is Vercel's serverless environment: there's no writable filesystem outside `/tmp`, which is ephemeral. Storing in Postgres means files persist across deployments and function restarts. The trade-off is that Postgres isn't optimal for large binary storage — a future migration to Cloudflare R2 or AWS S3 is on the roadmap."
+
+---
+
+---
+
+## 🔷 SECTION 3: DATABASE & BACKEND QUESTIONS
+
+---
+
+### Q12. How did you prevent a student from joining two groups?
+
+**Answer:**
+> "Database-level constraint: `@@unique([cycleId, studentId])` on the `GroupMember` model. The `cycleId` is denormalized onto every GroupMember row specifically for this. Even if application code has a bug, PostgreSQL will reject the second insert with a unique violation. I catch this Prisma error (`P2002`) and return a meaningful error message."
+
+---
+
+### Q13. What happens if two students accept the same group invite simultaneously?
+
+**Answer:**
+> "Both transactions run at serializable isolation. One succeeds, the other hits a serialization failure (Prisma error `P2034`). I catch that error and retry the transaction automatically. But even if retried, the `@@unique([cycleId, studentId])` constraint is the true backstop — the database will reject the fifth member."
+
+---
+
+### Q14. How does your CSV import work? What validations do you run?
+
+**Answer:**
+> "It's a two-phase process: Validate then Apply. On the first upload, the server parses the CSV, runs all validations, and returns a preview of which rows would be inserted and which would fail — but writes nothing.
+>
+> For students: Required columns are `usn`, `name`, `cgpa`, `email`. Validations include USN format, CGPA range (0–10), valid email, and duplicate detection. A student who already exists gets enrolled into the current cycle rather than rejected as a duplicate.
+>
+> On Apply, the same file is re-parsed server-side from scratch. I never trust what the browser sends back — it must re-validate. This prevents the client from sending a different payload on the apply call."
+
+---
+
+### Q15. How do your 9 Excel reports work? What library did you use?
+
+**Answer:**
+> "I use ExcelJS, not SheetJS. The reason: SheetJS Community Edition silently drops cell styles on write — bold headers, fill colors — because styling is a paid feature. I discovered this by actually testing round-trip read/write, and the bold header was gone. ExcelJS supports styling on the free tier.
+>
+> Each workbook has: a bold, filled, frozen header row with auto-filters, sized columns, and an About sheet that records who generated the report, what cycle it covers, the scope, and the row count. That's the audit trail.
+>
+> Scope is derived from the JWT session, not the query string. If a faculty member adds `scope=admin` to the URL, it's silently ignored and they still only see their own groups."
+
+---
+
+---
+
+## 🔷 SECTION 4: FRONTEND & SYSTEM DESIGN QUESTIONS
+
+---
+
+### Q16. How does real-time notification delivery work?
+
+**Answer:**
+> "Two-tier delivery: Server-Sent Events (SSE) for real-time push, and HTTP polling as the fallback. The SSE endpoint streams events to the student's browser as long as the connection is alive. On Vercel serverless, the SSE function gets killed at the execution limit — so I expect the stream to disconnect, and the client automatically reconnects. The polling endpoint `GET /api/notifications?since=<timestamp>` catches anything missed during reconnection. This way no message is ever lost."
+
+---
+
+### Q17. How is routing and access control structured in Next.js?
+
+**Answer:**
+> "Next.js 16 App Router groups routes by role using route groups in parentheses: `(app)/admin/`, `(app)/student/`, `(app)/faculty/`. The proxy middleware in `src/proxy.ts` reads the JWT cookie and redirects based on role — an authenticated student hitting `/admin` gets redirected to `/student`. But this is just the browser experience. Every API handler independently calls `requireApi(['ADMIN'])` which re-checks the JWT server-side and returns 401 or 403 if the claim doesn't match."
+
+---
+
+### Q18. How does the academic calendar PDF parsing work?
+
+**Answer:**
+> "The server extracts raw text from uploaded PDF files using the `unpdf` library. Then `src/lib/calendar-parse.ts` runs three passes:
+> 1. Line-by-line regex — looks for lines that contain phase keywords (R0, P1, P2, Review) and parse a date from them. HIGH confidence.
+> 2. Whole-blob regex — for PDFs that extract as one long string. MEDIUM confidence.
+> 3. Sentence chunk pass — only if the first two found nothing. LOW confidence.
+>
+> Six date formats are supported: `04-05 October 2026`, `12 September 2026`, `12/09/2026`, etc. If the PDF is a scanned image with no text layer, the system tells the admin and lets them paste the text manually."
+
+---
+
+---
+
+## 🔷 SECTION 5: TESTING QUESTIONS
+
+---
+
+### Q19. How did you test this project?
+
+**Answer:**
+> "Three levels of testing:
+> 1. **Unit tests (Vitest) — 121 tests:** These test pure functions — TF-IDF similarity scores, Gale-Shapley stability checks, CSV validators, PDF date parser, and AES encryption round-trips. No database needed.
+> 2. **API feature tests — 134 tests across 6 suites:** These hit real PostgreSQL and test actual API behavior — attempting a second group for one student, verifying a blocked title returns HTTP 409, checking guide capacity limits.
+> 3. **Browser E2E tests — 23 tests (Playwright):** These test the full UI — sign-in, navigate to a page, check visible elements are painted on screen, not just present in the DOM."
+
+---
+
+### Q20. What's the difference between unit tests and integration tests? Which did you write?
+
+**Answer:**
+> "Unit tests test one function in isolation with no external dependencies — like testing that `computeSimilarity('Smart Attendance', 'Smart Attendance System')` returns a score above 0.95. I have 121 of these.
+>
+> Integration tests test how components work together — like posting to `/api/groups` and verifying a row was actually written to PostgreSQL. I have 134 of these, which I call feature tests. They re-seed the database before each suite so results are reproducible."
+
+---
+
+---
+
+## 🔷 SECTION 6: BEHAVIORAL / HR QUESTIONS
+
+---
+
+### Q21. Tell me about a technical decision you made and why.
+
+**Answer:**
+> "I chose ExcelJS over SheetJS for report generation. The project spec mentioned SheetJS, so that was the obvious choice. But I actually tested it — I wrote a styled header, read it back, and the bold formatting was gone. After researching, I found SheetJS Community Edition silently drops cell styles because it's a paid feature. I documented this decision explicitly and switched to ExcelJS, which supports styling for free. The lesson: test your assumptions, especially around third-party library limitations."
+
+---
+
+### Q22. Did you work alone or in a team?
+
+**Answer:**
+> "I built this project individually. That meant I was responsible for architecture decisions, schema design, algorithm implementation, testing, and deployment setup. It gave me end-to-end ownership — I understood every layer of the stack, which helped me debug issues quickly and make informed design trade-offs."
+
+---
+
+### Q23. What would you do differently if you started over?
+
+**Answer:**
+> "I'd set up TypeScript strict-mode path aliases for Next.js 16's generated types from day one. We have 13 non-breaking TypeScript type warnings on `PageProps` and `RouteContext` types that I'd avoid with proper type declaration files upfront. I'd also plan for file storage early — starting with S3 or Cloudflare R2 instead of PostgreSQL bytea, since migrating later adds complexity."
+
+---
+
+### Q24. How did you handle deployment?
+
+**Answer:**
+> "The app is designed for Vercel deployment with a managed PostgreSQL database like Neon or Supabase. Vercel handles edge middleware for route gating and Vercel Cron replaces in-process `node-cron` for the reminder dispatcher — since you can't run a persistent process on serverless. Locally, I use Docker Compose to spin up PostgreSQL 17 on port 5433."
+
+---
+
+---
+
+## 🔷 SECTION 7: QUICK FIRE TECHNICAL QUESTIONS
+
+---
+
+### Q25. What is bcrypt? What is cost factor 12?
+
+**A:** Bcrypt is a password hashing function that's intentionally slow to make brute-force attacks impractical. Cost factor (work factor) 12 means 2^12 = 4096 iterations of the key derivation function. Higher cost = slower hash = harder to brute-force.
+
+---
+
+### Q26. What is HTTP-only cookie? Why use it for JWT?
+
+**A:** An HTTP-only cookie cannot be read by JavaScript — only sent by the browser with HTTP requests. This protects the JWT token from XSS attacks where malicious scripts try to steal authentication tokens from `localStorage`.
+
+---
+
+### Q27. What is `SameSite=Lax`?
+
+**A:** A CSRF (Cross-Site Request Forgery) protection. `Lax` means the cookie is sent on same-site requests and top-level navigations (clicking a link), but not on cross-site form submissions or AJAX. This prevents an attacker's page from silently submitting authenticated requests to your server.
+
+---
+
+### Q28. What is a blocking pair in stable matching?
+
+**A:** A blocking pair is a group G and guide F such that G prefers F over their current assignment AND F prefers G over one of their current assignments. If any blocking pair exists, the matching is unstable. My `findBlockingPair()` function verifies there are none.
+
+---
+
+### Q29. What is TF-IDF?
+
+**A:** TF-IDF = Term Frequency × Inverse Document Frequency. TF measures how often a word appears in a document. IDF penalizes words that appear in many documents (common words). Multiplying them gives high weight to words that are frequent in a specific document but rare across the corpus — these are the meaningful, distinguishing words.
+
+---
+
+### Q30. What is AES-256-GCM?
+
+**A:** AES-256-GCM is an authenticated encryption algorithm. AES-256 means 256-bit key (very strong). GCM (Galois/Counter Mode) adds authentication — it produces an authentication tag along with the ciphertext. If someone tampers with the ciphertext, decryption fails loudly with an authentication error instead of silently decrypting to garbage. I use this for encrypting per-faculty SMTP passwords.
+
+---
+
+---
+
+## 🔷 KEY NUMBERS TO MEMORIZE
+
+| Metric | Value |
+|--------|-------|
+| Database models | 26 |
+| API namespaces | 21 |
+| App screens | 30+ |
+| Unit tests | 121 |
+| API feature tests | 134 |
+| Browser E2E tests | 23 |
+| Enrolled students | 300 |
+| Active faculty guides | 40 |
+| Project groups | 71 |
+| Title corpus | 70 |
+| Project cycles | 3 |
+| Excel report types | 9 |
+| First-choice allocation rate | 78% (43 of 55 groups) |
+| Total allocation rate | 100% (on seed cohort) |
+| JWT session expiry | 8 hours |
+| Bcrypt cost factor | 12 |
+| Password reset expiry | 30 minutes |
+| Max attachment size (email) | 20 MB |
+
+---
+
+## 🔷 ONE-LINE ANSWERS FOR RAPID FIRE
+
+- **What's Prisma?** → "Type-safe ORM for Node.js that generates a TypeScript client from a schema file."
+- **What's Gale-Shapley?** → "A deferred acceptance algorithm for stable bipartite matching — no group-guide pair would both prefer each other over their current match."
+- **What's TF-IDF?** → "A text vectorization technique that weighs words by how unique they are to a specific document versus the corpus."
+- **What's Next.js App Router?** → "A React framework where server and client components coexist, API routes live alongside UI, and routing is folder-based."
+- **What's a serializable transaction?** → "The strictest SQL isolation level — concurrent transactions behave as if they ran sequentially."
+- **What's SSE?** → "Server-Sent Events — a one-way HTTP stream where the server pushes updates to the browser in real-time."
+- **What's JWT?** → "JSON Web Token — a signed token carrying user identity claims, verified without hitting the database."
+- **Why ExcelJS over SheetJS?** → "SheetJS Community Edition silently drops cell styles on write — styling is paywalled. ExcelJS supports it for free."
+
+---
+
+> **Good luck tomorrow! You built something real — speak confidently about it. Every feature is backed by a real database query and real code. Own that.** 🚀

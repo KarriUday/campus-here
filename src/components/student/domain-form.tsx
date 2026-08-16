@@ -1,6 +1,6 @@
 "use client";
 
-import { Save } from "lucide-react";
+import { Save, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/field";
 import { useToast } from "@/components/ui/toast";
 import {
   DuplicateChecker,
+  type ExtensionProposal,
   type SimilarityReport,
 } from "@/components/titles/duplicate-checker";
 import { cn } from "@/lib/utils";
@@ -43,11 +44,22 @@ export function DomainForm({
   const [title, setTitle] = useState(initialTitle);
   const [statement, setStatement] = useState(initialStatement);
   const [report, setReport] = useState<SimilarityReport | null>(null);
+  const [extensionData, setExtensionData] = useState<ExtensionProposal>({
+    isExtension: false,
+    proposedInnovations: "",
+  });
   const [saving, setSaving] = useState(false);
 
-  const blocked = report?.verdict === "BLOCKED";
+  const isBlocked = report?.verdict === "BLOCKED";
+  // If extension track is selected and innovations are filled out, allow saving!
+  const isExtensionValid =
+    extensionData.isExtension && extensionData.proposedInnovations.trim().length >= 10;
+
   const canSave =
-    !locked && Boolean(domainId) && title.trim().length >= 3 && !blocked;
+    !locked &&
+    Boolean(domainId) &&
+    title.trim().length >= 3 &&
+    (!isBlocked || isExtensionValid);
 
   async function save() {
     setSaving(true);
@@ -60,15 +72,17 @@ export function DomainForm({
           title: title.trim(),
           problemStatement: statement.trim() || undefined,
           domainId: domainId ?? undefined,
+          isExtension: extensionData.isExtension,
+          proposedInnovations: extensionData.proposedInnovations.trim() || undefined,
+          seniorReferenceId: extensionData.seniorReferenceId,
         }),
       });
       const data = await res.json();
 
       if (res.status === 409) {
-        // The server re-ran the check; the client score is never what decides.
         toast({
           tone: "error",
-          title: "Title rejected as a duplicate",
+          title: "Title rejected as identical duplicate",
           description: data.error,
         });
         if (data.report) setReport(data.report);
@@ -81,8 +95,12 @@ export function DomainForm({
 
       toast({
         tone: "success",
-        title: "Title and statement saved",
-        description: "Your guide will review it before approval.",
+        title: extensionData.isExtension
+          ? "Extension Track proposal registered!"
+          : "Title and problem statement saved!",
+        description: extensionData.isExtension
+          ? "Your guide will review your novel feature additions and architecture proposal."
+          : "Your guide will review your title before Review 0.",
       });
       router.refresh();
     } finally {
@@ -108,10 +126,10 @@ export function DomainForm({
                   <label
                     key={domain.id}
                     className={cn(
-                      "cursor-pointer border p-4 transition-colors",
+                      "cursor-pointer border p-4 transition-colors rounded-xl",
                       selected
-                        ? "border-primary bg-primary-soft"
-                        : "border-border hover:border-ink-tertiary",
+                        ? "border-[#28265f] bg-[#f0f0ff]"
+                        : "border-[#e2e2e9] hover:border-[#b6b7c4]",
                       locked && "cursor-not-allowed opacity-60",
                     )}
                   >
@@ -126,13 +144,13 @@ export function DomainForm({
                     <p
                       className={cn(
                         "text-sm font-semibold",
-                        selected ? "text-primary" : "text-ink",
+                        selected ? "text-[#28265f]" : "text-[#1f2937]",
                       )}
                     >
                       {domain.name}
                     </p>
                     {domain.description && (
-                      <p className="text-ink-secondary mt-1 text-xs leading-relaxed">
+                      <p className="text-[#717182] mt-1 text-xs leading-relaxed">
                         {domain.description}
                       </p>
                     )}
@@ -146,8 +164,8 @@ export function DomainForm({
 
       <Card>
         <CardHeader
-          title="Project title"
-          subtitle="Checked against every registered and previously imported title as you type."
+          title="Project Title & Originality Checker"
+          subtitle="Evaluated live against previous senior projects and institutional repository using Semantic Vector embeddings."
         />
         <CardBody>
           <DuplicateChecker
@@ -157,14 +175,15 @@ export function DomainForm({
             excludeTitleId={existingTitleId}
             label="Title"
             onReport={setReport}
+            onExtensionChange={setExtensionData}
           />
         </CardBody>
       </Card>
 
       <Card>
         <CardHeader
-          title="Problem statement"
-          subtitle="What problem are you solving, and how? Your guide reads this at Review 0."
+          title="Problem Statement & Scope"
+          subtitle="What problem are you solving, and how? Your guide reviews this at Review 0."
           actions={
             !locked && (
               <Button
@@ -173,37 +192,41 @@ export function DomainForm({
                 disabled={!canSave}
                 icon={<Save className="size-3.5" aria-hidden />}
               >
-                Save
+                {extensionData.isExtension ? "Submit Extension Proposal" : "Save Title & Statement"}
               </Button>
             )
           }
         />
         <CardBody className="space-y-3">
           <Textarea
-            label="Statement"
+            label="Problem Statement"
             value={statement}
             disabled={locked}
             onChange={(event) => setStatement(event.target.value)}
-            placeholder="Describe the problem, your proposed approach, and how you will evaluate it."
+            placeholder="Describe the engineering problem, your proposed methodology, and how your team will evaluate performance..."
             className="min-h-36"
             hint={`${statement.trim().length} characters`}
           />
 
-          {blocked && (
-            <p className="bg-error-soft text-error-ink px-3 py-2 text-sm">
-              Saving is disabled while the title scores 95% or above. Change the
-              title to something distinct from the match shown above.
+          {isBlocked && !isExtensionValid && (
+            <p className="rounded-lg bg-[#fff4f4] border border-[#f0c7ca] px-3 py-2 text-xs text-[#9f242b]">
+              Direct saving is disabled while title has ≥ 95% similarity. To proceed, either differentiate your title or apply under the <strong>Extension & Innovation Track</strong> with your novel feature additions.
             </p>
           )}
-          {!blocked && !domainId && !locked && (
-            <p className="text-ink-secondary text-sm">
+          {isExtensionValid && (
+            <p className="rounded-lg bg-[#f0fdf4] border border-[#bbf7d0] px-3 py-2 text-xs text-[#16a34a] flex items-center gap-1.5">
+              <Sparkles className="size-4" />
+              <strong>Extension Track Active:</strong> Your team will be evaluated based on the proposed novel features and architectural delta.
+            </p>
+          )}
+          {!isBlocked && !domainId && !locked && (
+            <p className="text-xs text-[#717182]">
               Choose a domain before saving.
             </p>
           )}
           {locked && (
-            <p className="text-ink-secondary text-sm">
-              Your group has been submitted, so the title and statement can no
-              longer be edited.
+            <p className="text-xs text-[#717182]">
+              Your group has been submitted, so the title and statement can no longer be edited.
             </p>
           )}
         </CardBody>

@@ -21,6 +21,10 @@ export async function loadCorpusIndex(cycleId: string): Promise<CorpusIndex> {
       cycleLabel: true,
       domain: { select: { name: true } },
       group: { select: { code: true } },
+      seniorAuthors: true,
+      githubUrl: true,
+      driveUrl: true,
+      projectAbstract: true,
     },
   });
 
@@ -31,6 +35,10 @@ export async function loadCorpusIndex(cycleId: string): Promise<CorpusIndex> {
     domainLabel: row.domain?.name ?? row.domainLabel,
     guideLabel: row.guideLabel,
     cycleLabel: row.cycleLabel ?? row.group?.code ?? null,
+    seniorAuthors: (row.seniorAuthors as any) ?? null,
+    githubUrl: row.githubUrl,
+    driveUrl: row.driveUrl,
+    projectAbstract: row.projectAbstract,
   }));
 
   return buildCorpusIndex(entries);

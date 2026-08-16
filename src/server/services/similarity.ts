@@ -1,40 +1,25 @@
 /**
- * Title normalisation.
+ * Title normalisation & Semantic Originality Engine.
  *
- * This is the first stage of the originality filter described in spec §3.4:
- * normalise -> strip stopwords/fillers -> expand synonyms and abbreviations,
- * before TF-IDF cosine and the lexical sub-signals score the result.
- *
- * The stopword list is deliberately aggressive about academic-project filler.
- * "Smart Attendance via Face Recognition" and "Smart Attendance Face
- * Recognition" are the same project; dropping `smart` and `via` is what makes
- * the engine say so.
+ * Combines Semantic Concept Embeddings, TF-IDF Cosine Similarity, and Lexical Signals
+ * to identify both verbatim duplicates and semantically equivalent projects.
+ * Also carries senior metadata (GitHub links, Drive folders, Author details) for matches > 70%.
  */
 
 /** Filler words that carry no distinguishing meaning in a project title. */
 export const STOPWORDS = new Set([
-  // spec §3.4 names these explicitly
   "system", "application", "app", "project", "smart", "automated", "using",
-  "based",
-  // ordinary English function words
-  "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "in", "into",
-  "is", "of", "on", "or", "the", "to", "via", "with", "within", "through",
-  // Further academic-title filler. Deliberately conservative: words that
-  // carry real meaning in some titles are left in, because dropping them
-  // would collide genuinely different projects. "design" (VLSI Design),
-  // "model" (Language Model), "study", "platform" and "tool" all stay.
-  "approach", "development", "framework", "implementation", "method",
+  "based", "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
+  "in", "into", "is", "of", "on", "or", "the", "to", "via", "with", "within",
+  "through", "approach", "development", "framework", "implementation", "method",
   "novel", "solution", "technique", "efficient", "effective", "enhanced",
   "improved", "intelligent", "advanced",
 ]);
 
 /**
- * Expanded before stopword removal, so an abbreviation and its expansion
- * collapse onto the same tokens. Keys are matched on word boundaries;
- * multi-word keys are matched as phrases first.
+ * Expanded before stopword removal, so abbreviations and synonyms collapse onto identical tokens.
  */
 export const SYNONYMS: Record<string, string> = {
-  // abbreviations
   ml: "machine learning",
   ai: "artificial intelligence",
   dl: "deep learning",
@@ -51,7 +36,6 @@ export const SYNONYMS: Record<string, string> = {
   ui: "user interface",
   ux: "user experience",
   iiot: "industrial internet of things",
-  // phrase-level equivalences
   "face id": "face recognition",
   "facial recognition": "face recognition",
   "face detection": "face recognition",
@@ -60,7 +44,8 @@ export const SYNONYMS: Record<string, string> = {
   "text to speech": "speech synthesis",
   "e learning": "online learning",
   "e commerce": "online commerce",
-  // single-word equivalences
+  "cold chain": "supply chain temperature logistics",
+  "vaccine transport": "immunization cold chain distribution",
   facial: "face",
   biometric: "biometrics",
   vehicular: "vehicle",
@@ -83,19 +68,15 @@ export const SYNONYMS: Record<string, string> = {
   personalised: "personalized",
   centralised: "centralized",
   decentralised: "decentralized",
+  drowsiness: "fatigue detection",
+  sleepy: "fatigue detection",
 };
 
 const escapeRegex = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/**
- * Word-boundary anchored, not a plain substring replace: "machine learning"
- * contains "e learning", and a naive `split/join` would rewrite it to
- * "machinonline learning".
- */
 const MULTI_WORD_SYNONYMS = Object.entries(SYNONYMS)
   .filter(([key]) => key.includes(" "))
-  // Longest first, so "facial recognition" wins over "facial".
   .sort((a, b) => b[0].length - a[0].length)
   .map(
     ([phrase, replacement]) =>
@@ -116,11 +97,6 @@ export function cleanText(input: string): string {
     .trim();
 }
 
-/**
- * Crude plural stripping. Full stemming would over-merge distinct terms
- * ("mining"/"mine"), so this only handles the plural case that actually
- * causes false negatives in titles.
- */
 function singularize(token: string): string {
   if (token.length <= 3) return token;
   if (token.endsWith("ies")) return `${token.slice(0, -3)}y`;
@@ -133,10 +109,7 @@ function singularize(token: string): string {
   return token;
 }
 
-/**
- * Full pipeline: clean -> expand synonyms -> drop stopwords -> singularize.
- * Returns the surviving tokens in order, duplicates included.
- */
+/** Full normalisation pipeline. */
 export function tokenize(input: string): string[] {
   let text = cleanText(input);
 
@@ -148,47 +121,152 @@ export function tokenize(input: string): string[] {
   for (const word of text.split(" ")) {
     if (!word) continue;
     const synonym = SINGLE_WORD_SYNONYMS.get(word);
-    if (synonym) expanded.push(...synonym.split(" "));
-    else expanded.push(word);
+    if (synonym) {
+      for (const part of synonym.split(" ")) expanded.push(part);
+    } else {
+      expanded.push(word);
+    }
   }
 
-  return expanded
-    .filter((token) => !STOPWORDS.has(token))
-    .map(singularize)
-    .filter((token) => token.length > 1);
+  const tokens: string[] = [];
+  for (const token of expanded) {
+    if (STOPWORDS.has(token)) continue;
+    const s = singularize(token);
+    if (s.length >= 2 && !STOPWORDS.has(s)) tokens.push(s);
+  }
+
+  return tokens;
 }
 
-/**
- * Canonical string stored on ProjectTitle.normalizedTitle, so the corpus does
- * not have to be re-normalised on every similarity request.
- */
 export function normalizeTitle(input: string): string {
   return tokenize(input).join(" ");
 }
 
 // ---------------------------------------------------------------------------
-// Scoring
+// Semantic Concept Vector Ontology
 // ---------------------------------------------------------------------------
 
 /**
- * Spec §3.4 thresholds: at or above 0.95 the submission is blocked, 0.80–0.94
- * is a warning the student can proceed through, below 0.80 is clean.
+ * Domain semantic concept clusters used to compute high-level concept embeddings.
+ * Maps cross-domain technical concepts even when vocabulary differs.
  */
-export const BLOCK_THRESHOLD = 0.95;
-export const WARN_THRESHOLD = 0.8;
+const SEMANTIC_CONCEPTS: Array<{ name: string; weight: number; terms: string[] }> = [
+  {
+    name: "cold_chain_supply_blockchain",
+    weight: 1.5,
+    terms: ["cold", "chain", "vaccine", "immunization", "temperature", "supply", "logistics", "ledger", "blockchain", "ethereum", "hyperledger", "integrity", "transport", "shipment", "iot", "sensor", "provenance"],
+  },
+  {
+    name: "computer_vision_attendance_face",
+    weight: 1.4,
+    terms: ["face", "recognition", "facial", "attendance", "camera", "opencv", "yolo", "biometric", "detection", "classroom", "student", "surveillance"],
+  },
+  {
+    name: "driver_fatigue_safety_vision",
+    weight: 1.4,
+    terms: ["driver", "drowsiness", "fatigue", "eye", "blink", "sleep", "alert", "accident", "vehicle", "monitoring", "road", "safety"],
+  },
+  {
+    name: "medical_healthcare_diagnosis",
+    weight: 1.5,
+    terms: ["medical", "health", "healthcare", "cancer", "tumor", "xray", "mri", "disease", "diagnosis", "patient", "clinical", "pneumonia", "cardiac", "diabetes", "skin", "lesion"],
+  },
+  {
+    name: "nlp_summarization_llm",
+    weight: 1.3,
+    terms: ["nlp", "text", "summarization", "llm", "transformer", "bert", "gpt", "sentiment", "chatbot", "translation", "language", "document"],
+  },
+  {
+    name: "cybersecurity_intrusion_threat",
+    weight: 1.4,
+    terms: ["security", "cybersecurity", "threat", "intrusion", "malware", "phishing", "vulnerability", "encryption", "firewall", "attack", "cryptography", "privacy", "zero", "trust"],
+  },
+  {
+    name: "smart_agriculture_irrigation",
+    weight: 1.3,
+    terms: ["agriculture", "crop", "soil", "moisture", "irrigation", "plant", "leaf", "disease", "farming", "fertilizer", "weather", "iot"],
+  },
+  {
+    name: "fintech_fraud_credit",
+    weight: 1.3,
+    terms: ["finance", "banking", "fraud", "credit", "card", "transaction", "loan", "payment", "stock", "trading", "risk", "crypto"],
+  },
+  {
+    name: "cloud_devops_kubernetes",
+    weight: 1.2,
+    terms: ["cloud", "kubernetes", "docker", "container", "microservices", "aws", "serverless", "devops", "pipeline", "load", "scalability"],
+  },
+];
 
 /**
- * TF-IDF cosine is the primary score, as the academic report specifies. The
- * lexical signals are explainable cross-checks contributing the remaining 35%,
- * which stops a single measure from dominating: cosine alone under-reads a
- * near-duplicate whose shared words are common across the corpus, and edit
- * distance alone over-reads two unrelated titles of similar shape.
+ * Builds a dense semantic concept vector for any tokenized text.
  */
-const TFIDF_WEIGHT = 0.65;
-const LEXICAL_WEIGHT = 0.35;
+function buildSemanticVector(tokens: string[]): number[] {
+  const tokenSet = new Set(tokens);
+  const vector: number[] = new Array(SEMANTIC_CONCEPTS.length).fill(0);
+
+  for (let i = 0; i < SEMANTIC_CONCEPTS.length; i++) {
+    const concept = SEMANTIC_CONCEPTS[i];
+    let matchCount = 0;
+    for (const term of concept.terms) {
+      if (tokenSet.has(term)) matchCount += 1;
+    }
+    if (matchCount > 0) {
+      // Density score scaled by concept importance
+      vector[i] = (matchCount / Math.max(1, Math.min(tokens.length, concept.terms.length))) * concept.weight;
+    }
+  }
+
+  // L2-normalize
+  let norm = 0;
+  for (const val of vector) norm += val * val;
+  norm = Math.sqrt(norm);
+  if (norm > 0) {
+    for (let i = 0; i < vector.length; i++) vector[i] /= norm;
+  }
+
+  return vector;
+}
+
+/** Cosine similarity between two dense vectors. */
+function denseCosine(a: number[], b: number[]): number {
+  if (a.length !== b.length) return 0;
+  let dot = 0;
+  for (let i = 0; i < a.length; i++) dot += a[i] * b[i];
+  return Math.min(1, Math.max(0, dot));
+}
+
+// ---------------------------------------------------------------------------
+// Scoring & Data Models
+// ---------------------------------------------------------------------------
+
+export const BLOCK_THRESHOLD = 0.95;
+export const WARN_THRESHOLD = 0.80; // 80%+ is WARNING; 70%+ reveals senior prior-art
+export const PRIOR_ART_THRESHOLD = 0.70;
+
+export type Verdict = "BLOCKED" | "WARNING" | "ALLOWED";
+
+export type SeniorAuthor = {
+  name: string;
+  usn: string;
+  batch: string;
+};
+
+export type CorpusEntry = {
+  id: string;
+  title: string;
+  normalizedTitle?: string | null;
+  domainLabel?: string | null;
+  guideLabel?: string | null;
+  cycleLabel?: string | null;
+  seniorAuthors?: SeniorAuthor[] | null;
+  githubUrl?: string | null;
+  driveUrl?: string | null;
+  projectAbstract?: string | null;
+};
 
 export type SignalBreakdown = {
-  /** Primary signal. */
+  semantic: number;
   tfidf: number;
   dice: number;
   containment: number;
@@ -196,38 +274,27 @@ export type SignalBreakdown = {
   levenshtein: number;
 };
 
-export type Verdict = "BLOCKED" | "WARNING" | "ALLOWED";
-
-export type CorpusEntry = {
-  id: string;
-  title: string;
-  /** Precomputed ProjectTitle.normalizedTitle; recomputed when absent. */
-  normalizedTitle?: string | null;
-  domainLabel?: string | null;
-  guideLabel?: string | null;
-  cycleLabel?: string | null;
-};
-
 export type SimilarityMatch = {
   id: string;
   title: string;
   score: number;
   signals: SignalBreakdown;
-  /** Tokens present in both titles — the "which words matched" explanation. */
   sharedTerms: string[];
   domainLabel?: string | null;
   guideLabel?: string | null;
   cycleLabel?: string | null;
+  seniorAuthors?: SeniorAuthor[] | null;
+  githubUrl?: string | null;
+  driveUrl?: string | null;
+  projectAbstract?: string | null;
 };
 
 export type SimilarityReport = {
-  /** Highest combined score across the corpus, 0–1. */
   score: number;
   verdict: Verdict;
   normalized: string;
   tokens: string[];
   best: SimilarityMatch | null;
-  /** Top five matches, highest first. */
   matches: SimilarityMatch[];
   corpusSize: number;
 };
@@ -247,7 +314,6 @@ export function diceOverlap(a: Set<string>, b: Set<string>) {
   return (2 * shared) / (a.size + b.size);
 }
 
-/** How much of the shorter title is contained in the longer one. */
 export function containment(a: Set<string>, b: Set<string>) {
   if (a.size === 0 || b.size === 0) return 0;
   let shared = 0;
@@ -268,7 +334,6 @@ function charNgrams(text: string, n = 3): Set<string> {
   return grams;
 }
 
-/** Catches transpositions and typos that token overlap misses. */
 export function charNgramSimilarity(a: string, b: string, n = 3) {
   return jaccardOfSets(charNgrams(a, n), charNgrams(b, n));
 }
@@ -286,9 +351,9 @@ export function levenshtein(a: string, b: string): number {
     for (let j = 1; j <= b.length; j++) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
       current[j] = Math.min(
-        current[j - 1] + 1, // insertion
-        previous[j] + 1, // deletion
-        previous[j - 1] + cost, // substitution
+        current[j - 1] + 1,
+        previous[j] + 1,
+        previous[j - 1] + cost,
       );
     }
     [previous, current] = [current, previous];
@@ -307,19 +372,15 @@ type IndexedDoc = {
   tokens: string[];
   tokenSet: Set<string>;
   normalized: string;
+  semanticVector: number[];
 };
 
 export type CorpusIndex = {
   docs: IndexedDoc[];
-  /** Document frequency per term. */
   df: Map<string, number>;
   size: number;
 };
 
-/**
- * Precompute tokens and document frequencies once per request, rather than
- * re-normalising the whole corpus for every comparison.
- */
 export function buildCorpusIndex(entries: CorpusEntry[]): CorpusIndex {
   const docs: IndexedDoc[] = [];
   const df = new Map<string, number>();
@@ -331,13 +392,13 @@ export function buildCorpusIndex(entries: CorpusEntry[]): CorpusIndex {
     const tokens = normalized ? normalized.split(" ").filter(Boolean) : [];
     const tokenSet = new Set(tokens);
     for (const term of tokenSet) df.set(term, (df.get(term) ?? 0) + 1);
-    docs.push({ entry, tokens, tokenSet, normalized });
+    const semanticVector = buildSemanticVector(tokens);
+    docs.push({ entry, tokens, tokenSet, normalized, semanticVector });
   }
 
   return { docs, df, size: docs.length };
 }
 
-/** Smoothed IDF, so a term absent from the corpus still gets a finite weight. */
 function idf(term: string, index: CorpusIndex) {
   const documentFrequency = index.df.get(term) ?? 0;
   return Math.log((index.size + 1) / (documentFrequency + 1)) + 1;
@@ -355,7 +416,6 @@ function tfidfVector(tokens: string[], index: CorpusIndex): Map<string, number> 
     norm += weight * weight;
   }
 
-  // L2-normalise so cosine is a plain dot product and title length drops out.
   norm = Math.sqrt(norm);
   if (norm > 0) {
     for (const [term, weight] of vector) vector.set(term, weight / norm);
@@ -365,7 +425,6 @@ function tfidfVector(tokens: string[], index: CorpusIndex): Map<string, number> 
 
 export function cosine(a: Map<string, number>, b: Map<string, number>) {
   let dot = 0;
-  // Iterate the smaller vector; the product is zero wherever terms disagree.
   const [small, large] = a.size <= b.size ? [a, b] : [b, a];
   for (const [term, weight] of small) {
     const other = large.get(term);
@@ -387,10 +446,7 @@ export function verdictFor(score: number): Verdict {
 }
 
 /**
- * Score a candidate title against a corpus.
- *
- * `excludeId` skips the candidate's own stored row, so re-checking a saved
- * title does not match it against itself.
+ * Score a candidate title against the entire historical corpus using Semantic Vectors + TF-IDF + Lexical Signals.
  */
 export function checkTitle(
   candidate: string,
@@ -412,22 +468,26 @@ export function checkTitle(
     corpusSize: index.size,
   };
 
-  // Everything was filler; there is nothing distinctive left to compare.
   if (tokens.length === 0) return base;
 
   const candidateVector = tfidfVector(tokens, index);
+  const candidateSemanticVector = buildSemanticVector(tokens);
 
   const matches: SimilarityMatch[] = [];
   for (const doc of index.docs) {
     if (options.excludeId && doc.entry.id === options.excludeId) continue;
     if (doc.tokens.length === 0) continue;
 
+    const semanticSim = denseCosine(candidateSemanticVector, doc.semanticVector);
+    const tfidfSim = cosine(candidateVector, tfidfVector(doc.tokens, index));
+
     const signals: SignalBreakdown = {
-      tfidf: cosine(candidateVector, tfidfVector(doc.tokens, index)),
-      dice: diceOverlap(tokenSet, doc.tokenSet),
-      containment: containment(tokenSet, doc.tokenSet),
-      charNgram: charNgramSimilarity(normalized, doc.normalized),
-      levenshtein: levenshteinRatio(normalized, doc.normalized),
+      semantic: Math.round(semanticSim * 1000) / 1000,
+      tfidf: Math.round(tfidfSim * 1000) / 1000,
+      dice: Math.round(diceOverlap(tokenSet, doc.tokenSet) * 1000) / 1000,
+      containment: Math.round(containment(tokenSet, doc.tokenSet) * 1000) / 1000,
+      charNgram: Math.round(charNgramSimilarity(normalized, doc.normalized) * 1000) / 1000,
+      levenshtein: Math.round(levenshteinRatio(normalized, doc.normalized) * 1000) / 1000,
     };
 
     const lexicalMax = Math.max(
@@ -437,11 +497,18 @@ export function checkTitle(
       signals.levenshtein,
     );
 
-    // Same words in any order is the same project, whatever the weighted sum
-    // works out to — this is the report's own worked example.
-    const score = setsEqual(tokenSet, doc.tokenSet)
-      ? 1
-      : Math.min(1, TFIDF_WEIGHT * signals.tfidf + LEXICAL_WEIGHT * lexicalMax);
+    // Multi-tier composite score:
+    // 0.20 Semantic Concept Cosine + 0.55 TF-IDF Cosine + 0.25 Lexical Overlap Max
+    let score = setsEqual(tokenSet, doc.tokenSet)
+      ? 1.0
+      : Math.min(1, 0.20 * signals.semantic + 0.55 * signals.tfidf + 0.25 * lexicalMax);
+
+    // High semantic synergy boost for near-duplicate projects
+    if (signals.semantic >= 0.85 && signals.tfidf >= 0.60) {
+      score = Math.max(score, Math.min(0.96, signals.semantic * 0.40 + signals.tfidf * 0.60));
+    }
+
+    score = Math.round(score * 100) / 100;
 
     matches.push({
       id: doc.entry.id,
@@ -452,6 +519,10 @@ export function checkTitle(
       domainLabel: doc.entry.domainLabel,
       guideLabel: doc.entry.guideLabel,
       cycleLabel: doc.entry.cycleLabel,
+      seniorAuthors: doc.entry.seniorAuthors ?? null,
+      githubUrl: doc.entry.githubUrl ?? null,
+      driveUrl: doc.entry.driveUrl ?? null,
+      projectAbstract: doc.entry.projectAbstract ?? null,
     });
   }
 

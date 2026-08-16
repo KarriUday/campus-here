@@ -79,14 +79,17 @@ const SaveSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters.").max(300),
   problemStatement: z.string().max(4000).optional(),
   domainId: z.string().optional(),
+  isExtension: z.boolean().default(false),
+  proposedInnovations: z.string().max(4000).optional(),
+  seniorReferenceId: z.string().optional(),
 });
 
 /**
  * Register a group's title.
  *
- * The similarity check is re-run here against the live corpus and a blocked
- * score is refused, so the client-side score shown while typing is only ever
- * a convenience — it is never what authorises the write.
+ * The similarity check is re-run here against the live corpus.
+ * If similarity is high, the group can submit it as an Extension Track proposal
+ * detailing their new novel features and innovations for faculty review.
  */
 export async function POST(request: Request) {
   const auth = await requireApi(["ADMIN", "STUDENT"]);
@@ -99,7 +102,15 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return badRequest(parsed.error.issues[0]?.message ?? "Invalid request.");
   }
-  const { groupId, title, problemStatement, domainId } = parsed.data;
+  const {
+    groupId,
+    title,
+    problemStatement,
+    domainId,
+    isExtension,
+    proposedInnovations,
+    seniorReferenceId,
+  } = parsed.data;
 
   const group = await prisma.group.findFirst({
     where: { id: groupId, cycleId: cycle.id },
@@ -129,11 +140,12 @@ export async function POST(request: Request) {
   const index = await loadCorpusIndex(cycle.id);
   const report = checkTitle(title, index, { excludeId: group.title?.id });
 
-  if (report.score >= BLOCK_THRESHOLD) {
+  // If score is high (>= BLOCK_THRESHOLD) and NOT registered as an approved extension track
+  if (report.score >= BLOCK_THRESHOLD && !isExtension) {
     return NextResponse.json(
       {
         error:
-          "This title is too similar to one already registered. Choose a different title.",
+          "This title is effectively identical to an existing project. Choose a different title or submit it under the 'Extension & Innovation Track' with novel features.",
         report,
       },
       { status: 409 },
@@ -142,13 +154,9 @@ export async function POST(request: Request) {
 
   const effectiveDomainId = domainId ?? group.domainId;
   const normalized = normalizeTitle(title);
-  // The report is a plain object already, but Decimal-free JSON is what the
-  // Json column expects.
   const similarityReport = JSON.parse(JSON.stringify(report));
 
   const saved = await prisma.$transaction(async (tx) => {
-    // The domain lives on the group as well as the title, so the picker and
-    // the title form save together in one round trip.
     if (domainId && domainId !== group.domainId) {
       await tx.group.update({
         where: { id: group.id },
@@ -169,6 +177,9 @@ export async function POST(request: Request) {
         approvalStatus: "PENDING",
         similarityScore: report.score,
         similarityReport,
+        isExtension: Boolean(isExtension),
+        proposedInnovations: proposedInnovations ?? null,
+        seniorReferenceId: seniorReferenceId ?? null,
       },
       update: {
         title,
@@ -178,8 +189,11 @@ export async function POST(request: Request) {
         approvalStatus: "PENDING",
         similarityScore: report.score,
         similarityReport,
+        isExtension: Boolean(isExtension),
+        proposedInnovations: proposedInnovations ?? null,
+        seniorReferenceId: seniorReferenceId ?? null,
       },
-      select: { id: true, title: true, approvalStatus: true },
+      select: { id: true, title: true, approvalStatus: true, isExtension: true },
     });
   });
 

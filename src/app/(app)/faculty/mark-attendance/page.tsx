@@ -33,7 +33,7 @@ export default async function MarkAttendancePage() {
     where: { cycleId: cycle.id, facultyId },
     orderBy: { scheduledAt: "asc" },
     include: {
-      group: { select: { code: true } },
+      group: { select: { id: true, code: true, title: { select: { title: true } } } },
       _count: { select: { attendance: true, evaluations: true } },
     },
   });
@@ -73,7 +73,9 @@ export default async function MarkAttendancePage() {
         initialSessionId={first?.id ?? null}
         sessions={sessions.map((row) => ({
           id: row.id,
+          groupId: row.group.id,
           groupCode: row.group.code,
+          projectTitle: row.group.title?.title ?? "Untitled Project",
           phase: row.phase,
           scheduledAt: row.scheduledAt.toISOString(),
           venue: row.venue,

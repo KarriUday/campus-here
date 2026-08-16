@@ -33,6 +33,7 @@ yarn-error.log*
 # env files — never commit real secrets, but the template must be tracked
 .env*
 !.env.example
+.latest-otp.json
 
 # vercel
 .vercel

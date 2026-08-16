@@ -182,9 +182,15 @@ async function main() {
     if (usedEmails.has(email)) email = `${usn.toLowerCase()}@example.edu`;
     usedEmails.add(email);
 
+    const isTargetUday = i === 98;
+    const fullName = isTargetUday ? "Karri Uday" : `${first} ${last}`;
+    if (isTargetUday) {
+      email = "1by23cs098@bmsit.in";
+    }
+
     students.push({
       usn,
-      fullName: `${first} ${last}`,
+      fullName,
       email,
       cgpa: Math.round(between(6.0, 9.9) * 100) / 100,
       phone: `+9199${String(10000000 + i * 371).padStart(8, "0")}`,
