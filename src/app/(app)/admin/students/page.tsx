@@ -9,6 +9,7 @@ import { getSelectedCycle } from "@/lib/cycle";
 import { prisma } from "@/lib/prisma";
 import { requirePage } from "@/lib/rbac";
 import { formatCgpa } from "@/lib/utils";
+import { StudentApprovalAction } from "./student-approval-action";
 
 export const metadata: Metadata = { title: "Students" };
 
@@ -23,6 +24,7 @@ export default async function StudentsPage({
 
   const query = typeof params.q === "string" ? params.q.trim() : "";
   const grouped = typeof params.grouped === "string" ? params.grouped : "";
+  const statusFilter = typeof params.status === "string" ? params.status : "";
   const page = Math.max(1, Number(params.page ?? 1) || 1);
 
   if (!cycle) {
@@ -39,7 +41,16 @@ export default async function StudentsPage({
   }
 
   const where = {
-    enrollments: { some: { cycleId: cycle.id } },
+    ...(statusFilter === "PENDING"
+      ? { user: { is: { approvalStatus: "PENDING" as const } } }
+      : {
+          enrollments: { some: { cycleId: cycle.id } },
+          ...(statusFilter === "APPROVED"
+            ? { user: { is: { approvalStatus: "APPROVED" as const } } }
+            : statusFilter === "REJECTED"
+              ? { user: { is: { approvalStatus: "REJECTED" as const } } }
+              : {}),
+        }),
     ...(query
       ? {
           OR: [
@@ -56,7 +67,7 @@ export default async function StudentsPage({
         : {}),
   };
 
-  const [total, students, ungroupedCount] = await Promise.all([
+  const [total, students, ungroupedCount, pendingCount] = await Promise.all([
     prisma.student.count({ where }),
     prisma.student.findMany({
       where,
@@ -70,6 +81,13 @@ export default async function StudentsPage({
         email: true,
         phone: true,
         cgpa: true,
+        user: {
+          select: {
+            id: true,
+            approvalStatus: true,
+            isActive: true,
+          },
+        },
         memberships: {
           where: { cycleId: cycle.id },
           select: { group: { select: { code: true, status: true } } },
@@ -82,6 +100,12 @@ export default async function StudentsPage({
         memberships: { none: { cycleId: cycle.id } },
       },
     }),
+    prisma.user.count({
+      where: {
+        role: "STUDENT",
+        approvalStatus: "PENDING",
+      },
+    }),
   ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -89,6 +113,7 @@ export default async function StudentsPage({
     const search = new URLSearchParams();
     if (query) search.set("q", query);
     if (grouped) search.set("grouped", grouped);
+    if (statusFilter) search.set("status", statusFilter);
     for (const [key, value] of Object.entries(next)) {
       if (value === "") search.delete(key);
       else search.set(key, String(value));
@@ -101,10 +126,34 @@ export default async function StudentsPage({
     <>
       <PageHeader
         title="Students"
-        subtitle="Search the roster and see group membership and CGPA."
+        subtitle="Search the roster and see group membership, CGPA and account approval."
         cycleName={cycle.name}
         role="Admin"
       />
+
+      {pendingCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-lg">
+              ⏳
+            </span>
+            <div>
+              <p className="font-semibold text-sm">
+                {pendingCount} student registration{pendingCount === 1 ? "" : "s"} awaiting approval
+              </p>
+              <p className="text-xs text-amber-700">
+                Newly registered students require admin approval before they can log in.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/students?status=PENDING"
+            className="rounded-full bg-amber-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 transition-colors shadow-sm"
+          >
+            Review Pending ({pendingCount})
+          </Link>
+        </div>
+      )}
 
       <Card>
         <CardHeader
@@ -148,13 +197,29 @@ export default async function StudentsPage({
                 <option value="no">Not in a group</option>
               </select>
             </div>
+            <div>
+              <label htmlFor="student-status" className="label-xs text-ink-tertiary">
+                Account status
+              </label>
+              <select
+                id="student-status"
+                name="status"
+                defaultValue={statusFilter}
+                className="border-border-subtle bg-surface-raised text-ink hover:border-ink-tertiary focus:border-primary mt-2 h-11 rounded-lg border px-3 pr-8 text-sm transition-colors"
+              >
+                <option value="">All statuses</option>
+                <option value="PENDING">Pending approval</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
             <button
               type="submit"
               className="bg-primary hover:bg-primary-hover h-11 rounded-full px-6 text-sm font-medium text-white transition-colors"
             >
               Apply
             </button>
-            {(query || grouped) && (
+            {(query || grouped || statusFilter) && (
               <Link
                 href="/admin/students"
                 className="label-xs text-ink-tertiary hover:text-primary h-10 px-2 leading-10 transition-colors"
@@ -203,6 +268,16 @@ export default async function StudentsPage({
                     <Badge tone="warning">No group</Badge>
                   );
                 },
+              },
+              {
+                key: "approval",
+                header: "Account Approval",
+                render: (row) => (
+                  <StudentApprovalAction
+                    userId={row.user?.id}
+                    initialStatus={row.user?.approvalStatus ?? "APPROVED"}
+                  />
+                ),
               },
             ]}
           />

@@ -24,6 +24,7 @@ type ShellProps = {
   cycles: CycleSummary[];
   selectedCycleCode: string;
   user: { name: string; email: string };
+  hasFaculty?: boolean;
   children: ReactNode;
 };
 
@@ -82,6 +83,7 @@ export function AppShell({
   cycles,
   selectedCycleCode,
   user,
+  hasFaculty,
   children,
 }: ShellProps) {
   const pathname = usePathname();
@@ -89,6 +91,12 @@ export function AppShell({
   // the close button — no route-change effect needed.
   const [drawerOpen, setDrawerOpen] = useState(false);
   const cycleName = cycles.find((c) => c.code === selectedCycleCode)?.name ?? "";
+
+  // Dual-role support: if Admin has a linked Faculty profile and is browsing /faculty/*
+  const effectiveRole: Role =
+    role === "ADMIN" && hasFaculty && pathname.startsWith("/faculty")
+      ? "FACULTY"
+      : role;
 
   return (
     <div className="min-h-dvh">
@@ -117,7 +125,23 @@ export function AppShell({
             <CycleSwitcher cycles={cycles} selectedCode={selectedCycleCode} />
             <ModeToggle mode={mode} />
             <ShareLinkButton cycleCode={selectedCycleCode} mode={mode} />
-            <UserMenu name={user.name} email={user.email} role={role} />
+            {role === "ADMIN" && hasFaculty && (
+              <Link
+                href={effectiveRole === "FACULTY" ? "/admin" : "/faculty"}
+                className="label-xs hidden sm:inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5 text-ink hover:bg-surface-raised transition-colors"
+                title={effectiveRole === "FACULTY" ? "Switch to Admin View" : "Switch to Teacher View"}
+              >
+                <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
+                {effectiveRole === "FACULTY" ? "Go to Admin" : "Go to Teacher"}
+              </Link>
+            )}
+            <UserMenu
+              name={user.name}
+              email={user.email}
+              role={role}
+              canSwitchRole={role === "ADMIN" && Boolean(hasFaculty)}
+              activeRole={effectiveRole}
+            />
           </div>
         </div>
       </header>
@@ -127,7 +151,7 @@ export function AppShell({
           <p className="label-xs text-ink-tertiary mb-3 px-4">
             {cycleName || "No cycle selected"}
           </p>
-          <NavList role={role} mode={mode} pathname={pathname} />
+          <NavList role={effectiveRole} mode={mode} pathname={pathname} />
         </aside>
 
         <main
@@ -172,7 +196,7 @@ export function AppShell({
                 </button>
               </div>
               <NavList
-                role={role}
+                role={effectiveRole}
                 mode={mode}
                 pathname={pathname}
                 onNavigate={() => setDrawerOpen(false)}

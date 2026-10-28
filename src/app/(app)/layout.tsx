@@ -22,6 +22,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
         cycles={cycles}
         selectedCycleCode={selectedCycle?.code ?? ""}
         user={{ name: session.name, email: session.email }}
+        hasFaculty={Boolean(session.facultyId)}
       >
         {children}
       </AppShell>

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { dashboardPathFor, setSessionCookie, signSession } from "@/lib/auth";
 
 const LoginSchema = z.object({
-  email: z.email("Enter a valid email address."),
+  email: z.string().min(1, "Please enter your email or USN."),
   password: z.string().min(1, "Password is required."),
 });
 
@@ -18,9 +18,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const email = parsed.data.email.trim().toLowerCase();
-  const user = await prisma.user.findUnique({
-    where: { email },
+  const rawInput = parsed.data.email.trim();
+  const inputLower = rawInput.toLowerCase();
+  const usnUpper = rawInput.toUpperCase();
+  const possibleBmsitEmail = rawInput.includes("@") ? inputLower : `${inputLower}@bmsit.in`;
+
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: inputLower },
+        { email: possibleBmsitEmail },
+        { student: { usn: usnUpper } },
+        { student: { email: inputLower } },
+      ],
+    },
     include: {
       student: { select: { id: true } },
       faculty: { select: { id: true } },
@@ -45,7 +56,29 @@ export async function POST(request: Request) {
     parsed.data.password,
     user.passwordHash,
   );
-  if (!passwordMatches || !user.isActive) return invalid;
+  if (!passwordMatches) return invalid;
+
+  if (user.approvalStatus === "PENDING") {
+    return NextResponse.json(
+      {
+        error:
+          "Your account is pending administrator approval. Please wait for an administrator to approve your registration before signing in.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (user.approvalStatus === "REJECTED") {
+    return NextResponse.json(
+      {
+        error:
+          "Your registration was rejected by the administrator. Please contact your department coordinator.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (!user.isActive) return invalid;
 
   const token = await signSession({
     userId: user.id,

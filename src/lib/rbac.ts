@@ -32,6 +32,9 @@ export async function requireApi(roles?: Role[]): Promise<ApiAuth> {
   const session = await getSession();
   if (!session) return { ok: false, response: unauthorized() };
   if (roles && roles.length > 0 && !roles.includes(session.role)) {
+    if (session.role === "ADMIN" && session.facultyId && roles.includes("FACULTY")) {
+      return { ok: true, session };
+    }
     return { ok: false, response: forbidden() };
   }
   return { ok: true, session };
@@ -50,6 +53,9 @@ export async function requireFacultyScope(): Promise<
   if (!auth.ok) return auth;
 
   if (auth.session.role === "ADMIN") {
+    if (auth.session.facultyId) {
+      return { ok: true, session: auth.session, facultyId: auth.session.facultyId };
+    }
     return { ok: true, session: auth.session, facultyId: null };
   }
   if (!auth.session.facultyId) {
@@ -66,6 +72,9 @@ export async function requirePage(roles?: Role[]): Promise<SessionPayload> {
   const session = await getSession();
   if (!session) redirect("/login");
   if (roles && roles.length > 0 && !roles.includes(session.role)) {
+    if (session.role === "ADMIN" && session.facultyId && roles.includes("FACULTY")) {
+      return session;
+    }
     redirect(dashboardPathFor(session.role));
   }
   return session;

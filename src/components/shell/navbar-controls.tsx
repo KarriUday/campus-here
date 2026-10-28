@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Link2, LogOut, Monitor, User } from "lucide-react";
+import { Check, GraduationCap, Link2, LogOut, Monitor, ShieldCheck, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { selectCycle, selectNavMode } from "@/app/(app)/actions";
@@ -122,10 +123,14 @@ export function UserMenu({
   name,
   email,
   role,
+  canSwitchRole,
+  activeRole,
 }: {
   name: string;
   email: string;
   role: string;
+  canSwitchRole?: boolean;
+  activeRole?: string;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -169,8 +174,36 @@ export function UserMenu({
           <div className="px-2.5 py-2">
             <p className="text-ink truncate text-sm font-semibold">{name}</p>
             <p className="text-ink-tertiary mono mt-0.5 truncate text-xs">{email}</p>
-            <span className="bg-primary-soft text-info-ink mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium">{role}</span>
+            <span className="bg-primary-soft text-info-ink mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium">
+              {activeRole ? `${activeRole} VIEW` : role}
+            </span>
           </div>
+
+          {canSwitchRole && (
+            <>
+              <div className="bg-border-subtle my-2 h-px" />
+              {activeRole === "FACULTY" ? (
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className="label-xs text-ink hover:bg-surface flex w-full items-center gap-2 rounded-full px-3 py-2 transition-colors"
+                >
+                  <ShieldCheck className="size-4 text-amber-600" aria-hidden />
+                  Switch to Admin View
+                </Link>
+              ) : (
+                <Link
+                  href="/faculty"
+                  onClick={() => setOpen(false)}
+                  className="label-xs text-ink hover:bg-surface flex w-full items-center gap-2 rounded-full px-3 py-2 transition-colors"
+                >
+                  <GraduationCap className="size-4 text-primary" aria-hidden />
+                  Switch to Teacher View
+                </Link>
+              )}
+            </>
+          )}
+
           <div className="bg-border-subtle my-2 h-px" />
           <button
             type="button"

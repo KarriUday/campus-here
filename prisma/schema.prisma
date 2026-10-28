@@ -22,6 +22,12 @@ enum Role {
   FACULTY
 }
 
+enum AccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum Designation {
   ASSISTANT_PROFESSOR
   ASSOCIATE_PROFESSOR
@@ -190,8 +196,9 @@ model User {
   email        String    @unique
   passwordHash String
   role         Role
-  name         String
-  isActive     Boolean   @default(true)
+  name           String
+  approvalStatus AccountStatus @default(APPROVED)
+  isActive       Boolean       @default(true)
   lastLoginAt  DateTime?
 
   resetTokenHash   String?

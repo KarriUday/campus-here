@@ -63,18 +63,24 @@ export async function POST(request: Request) {
     include: { user: true },
   });
 
+  // Get active cycle to ensure student is enrolled
+  const activeCycle = await prisma.projectCycle.findFirst({
+    where: { isActive: true },
+    select: { id: true },
+  });
+
   let user;
 
   if (student) {
-    // If student has an existing user account, update their email and password
+    // If student has an existing user account, update credentials and set to PENDING approval
     if (student.user) {
       user = await prisma.user.update({
         where: { id: student.user.id },
         data: {
           email: emailLower,
           passwordHash,
-          isActive: true,
-          lastLoginAt: new Date(),
+          approvalStatus: "PENDING",
+          isActive: false,
         },
         include: { student: { select: { id: true } } },
       });
@@ -83,16 +89,15 @@ export async function POST(request: Request) {
         data: { email: emailLower },
       });
     } else {
-      // Student exists but no user linked (unlikely given schema, but safe)
       user = await prisma.user.create({
         data: {
           email: emailLower,
           name: student.fullName,
           role: "STUDENT",
           passwordHash,
-          isActive: true,
+          approvalStatus: "PENDING",
+          isActive: false,
           student: { connect: { id: student.id } },
-          lastLoginAt: new Date(),
         },
         include: { student: { select: { id: true } } },
       });
@@ -105,14 +110,15 @@ export async function POST(request: Request) {
         name: usnUpper,
         role: "STUDENT",
         passwordHash,
-        isActive: true,
-        lastLoginAt: new Date(),
+        approvalStatus: "PENDING",
+        isActive: false,
         student: {
           create: {
             usn: usnUpper,
             fullName: usnUpper,
             email: emailLower,
             cgpa: 0,
+            ...(activeCycle ? { enrollments: { create: { cycleId: activeCycle.id } } } : {}),
           },
         },
       },
@@ -120,15 +126,11 @@ export async function POST(request: Request) {
     });
   }
 
-  // Issue a session immediately
-  const token = await signSession({
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    studentId: user.student?.id,
+  // Do NOT log the student in immediately; require admin approval
+  return NextResponse.json({
+    ok: true,
+    pendingApproval: true,
+    message:
+      "Your account has been registered and is pending administrator approval. You will be able to sign in once an administrator approves your account.",
   });
-  await setSessionCookie(token);
-
-  return NextResponse.json({ ok: true, redirectTo: dashboardPathFor(user.role) });
 }

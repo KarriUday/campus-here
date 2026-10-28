@@ -42,9 +42,36 @@ export async function POST(request: Request) {
     },
   });
 
-  if (!user || !user.isActive) {
+  if (!user) {
     return NextResponse.json(
-      { error: "Account not found or disabled." },
+      { error: "Account not found." },
+      { status: 401 },
+    );
+  }
+
+  if (user.approvalStatus === "PENDING") {
+    return NextResponse.json(
+      {
+        error:
+          "Your account is pending administrator approval. Please wait for an administrator to approve your registration before signing in.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (user.approvalStatus === "REJECTED") {
+    return NextResponse.json(
+      {
+        error:
+          "Your registration was rejected by the administrator. Please contact your department coordinator.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (!user.isActive) {
+    return NextResponse.json(
+      { error: "Account disabled." },
       { status: 401 },
     );
   }

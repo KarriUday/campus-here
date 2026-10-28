@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
+  Clock,
   Eye,
   EyeOff,
   Hash,
@@ -16,7 +17,7 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/motion/reveal";
 
-type Step = "request" | "verify";
+type Step = "request" | "verify" | "pending";
 
 export function SignupForm() {
   const router = useRouter();
@@ -126,6 +127,10 @@ export function SignupForm() {
         setError(data.error ?? "Verification failed.");
         return;
       }
+      if (data.pendingApproval) {
+        setStep("pending");
+        return;
+      }
       router.replace(data.redirectTo ?? "/student");
       router.refresh();
     } catch {
@@ -144,18 +149,25 @@ export function SignupForm() {
 
       <h1 className="text-[2rem] leading-tight font-semibold tracking-[-0.035em] text-[#242157] sm:text-[2.5rem]">
         <Reveal mode="mount">
-          {step === "request" ? "Sign up for Campus Here" : "Verify your email"}
+          {step === "request"
+            ? "Sign up for Campus Here"
+            : step === "verify"
+              ? "Verify your email"
+              : "Account Registered"}
         </Reveal>
       </h1>
 
-      <p className="mt-4 max-w-md text-sm leading-6 text-[#686977]">
-        {step === "request"
-          ? "Enter your college email and USN. We'll send a one-time code to verify your identity."
-          : `We sent a 6-digit code to ${email}. Enter it below to activate your account.`}
-      </p>
+      {step !== "pending" && (
+        <p className="mt-4 max-w-md text-sm leading-6 text-[#686977]">
+          {step === "request"
+            ? "Enter your college email and USN. We'll send a one-time code to verify your identity."
+            : `We sent a 6-digit code to ${email}. Enter it below to activate your account.`}
+        </p>
+      )}
 
       {/* Step indicator */}
-      <div className="mt-6 flex items-center gap-3">
+      {step !== "pending" && (
+        <div className="mt-6 flex items-center gap-3">
         <div className="flex items-center gap-1.5">
           <span
             className={`flex size-6 items-center justify-center rounded-full text-xs font-bold ${
@@ -190,6 +202,7 @@ export function SignupForm() {
           </span>
         </div>
       </div>
+      )}
 
       {/* --- STEP 1: Request OTP --- */}
       {step === "request" && (
@@ -401,6 +414,35 @@ export function SignupForm() {
             ← Go back and change email
           </button>
         </form>
+      )}
+
+      {/* --- STEP 3: Pending Admin Approval --- */}
+      {step === "pending" && (
+        <div className="mt-8 flex flex-col items-center text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-[#fef3c7] text-[#d97706] shadow-sm">
+            <Clock className="size-8" />
+          </div>
+          <h2 className="mt-5 text-2xl font-bold tracking-tight text-[#242157]">
+            Registration Submitted!
+          </h2>
+          <p className="mt-3 max-w-md text-sm leading-6 text-[#686977]">
+            Your student account (<span className="font-semibold text-[#242157]">{usn}</span>) has been created successfully.
+          </p>
+          <div className="mt-6 w-full rounded-2xl border border-[#fed7aa] bg-[#fffbeb] p-5 text-left text-sm text-[#92400e]">
+            <p className="font-bold flex items-center gap-2 text-base text-[#b45309]">
+              <span>⚠️</span> Awaiting Administrator Approval
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-[#78350f]">
+              An administrator must verify and approve your registration before your account is activated. Once approved by the department coordinator, you will be able to sign in with your email and password.
+            </p>
+          </div>
+          <Link
+            href="/login"
+            className="mt-6 flex h-13 w-full items-center justify-center rounded-xl bg-[#28265f] text-sm font-semibold text-white shadow-[0_10px_24px_-12px_rgba(40,38,95,0.72)] transition-colors hover:bg-[#1d1b48]"
+          >
+            Back to Sign In
+          </Link>
+        </div>
       )}
     </div>
   );

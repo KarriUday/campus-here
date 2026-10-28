@@ -38,7 +38,7 @@ const ROLE_CONFIG: Record<
     label: "Student",
     badge: "Project Team",
     icon: GraduationCap,
-    defaultEmail: "1by23cs098@bmsit.in",
+    defaultEmail: "1by24cs003@bmsit.in",
     description: "Manage group, project titles, guide preferences & review timeline",
     accentColor: "#28265f",
   },
@@ -46,7 +46,7 @@ const ROLE_CONFIG: Record<
     label: "Faculty",
     badge: "Project Guide",
     icon: BookOpen,
-    defaultEmail: "ananya.rao@example.edu",
+    defaultEmail: "dhanalakshmi.bk@bmsit.in",
     description: "Review assigned groups, evaluate milestones & mark attendance",
     accentColor: "#0284c7",
   },
@@ -54,7 +54,7 @@ const ROLE_CONFIG: Record<
     label: "Admin",
     badge: "Coordinator",
     icon: ShieldCheck,
-    defaultEmail: "admin@example.edu",
+    defaultEmail: "karri.uday@bmsit.in",
     description: "Manage project cycles, roster imports, allocation engine & reports",
     accentColor: "#b9272f",
   },
@@ -87,7 +87,7 @@ export function LoginForm() {
   function handleAutoFill(role: RoleType) {
     setSelectedRole(role);
     setEmail(ROLE_CONFIG[role].defaultEmail);
-    setPassword("Campus@123");
+    setPassword("bmsit123");
     setError(null);
   }
 
